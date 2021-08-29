@@ -68,7 +68,7 @@ make install
 
 ## Tests
 
-There are problems compilating [nccl-tests](https://github.com/nvidia/nccl-tests.) on Mac OS X.
+There are problems compilating [nccl-tests](https://github.com/nvidia/nccl-tests) on Mac OS X.
 
 In fact, not all functions of NCCL works on Mac OS X. This project is to help Pytorch-osx-build
 
