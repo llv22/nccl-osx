@@ -80,8 +80,8 @@ $(LIBDIR)/$(STATICLIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	mkdir -p $(LIBDIR)
 	$(eval TMP := $(shell mktemp -d))
 	cp $(LIBOBJ) $(TMP)
-	cd $(TMP) && ar x $(DEVICELIB) && cd -
-	ar cr $@ $(LIBOBJ) $(TMP)/*.o
+	cd $(TMP) && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar x $(DEVICELIB) && cd -
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cr $@ $(LIBOBJ) $(TMP)/*.o
 	rm -Rf $(TMP)
 
 $(PKGDIR)/nccl.pc : nccl.pc.in
