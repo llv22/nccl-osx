@@ -88,6 +88,11 @@ In fact, not all functions of NCCL works on Mac OS X.
 * This project also aims at making JAX XLA bridge working
 * Not all functionalities have been successfully passed
 
+## Todo
+
+1, whether dylib is needed?  
+refer to <https://developer.apple.com/forums/thread/26542>
+
 ## Copyright
 
 All source code and accompanying documentation is copyright (c) 2015-2019, NVIDIA CORPORATION. All rights reserved.
