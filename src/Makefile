@@ -17,10 +17,13 @@ LIBSRCFILES := init.cc channel.cc bootstrap.cc transport.cc enqueue.cc group.cc 
 
 ##### lib files
 LIBNAME     := libnccl.so
+SHLIBEXT 	:= dylib
+SHARELIBNAME  := libnccl.$(SHLIBEXT)
 STATICLIBNAME := libnccl_static.a
 ##### pkgconfig files
 PKGCONFIGFILE := nccl.pc
 ##### dirs
+STDCXX_LIB = $(shell $(CXX) -print-file-name=libstdc++.$(SHLIBEXT))
 BUILDDIR ?= $(abspath ../build)
 INCDIR := $(BUILDDIR)/include
 LIBDIR := $(BUILDDIR)/lib
@@ -40,11 +43,13 @@ LDFLAGS    += -L${CUDA_LIB} -l$(CUDARTLIB) -lpthread  -ldl
 DEVICELIB  := $(BUILDDIR)/obj/collectives/device/colldevice.a
 
 ##### rules
-build : lib staticlib
+build : lib staticlib sharelib
 
 lib : $(INCTARGETS) $(LIBDIR)/$(LIBTARGET) $(PKGDIR)/$(PKGTARGET)
 
 staticlib : $(LIBDIR)/$(STATICLIBTARGET)
+
+sharelib : $(LIBDIR)/$(SHARELIBNAME)
 
 $(DEVICELIB): ALWAYS_REBUILD
 	$(MAKE) -C collectives/device
@@ -53,7 +58,7 @@ $(DEVICELIB): ALWAYS_REBUILD
 ALWAYS_REBUILD:
 
 -include $(DEPFILES)
-$(LIBDIR)/$(LIBTARGET) $(LIBDIR)/$(STATICLIBTARGET) : $(LIBOBJ)
+$(LIBDIR)/$(LIBTARGET) $(LIBDIR)/$(STATICLIBTARGET) $(LIBDIR)/$(SHARELIBNAME) : $(LIBOBJ)
 
 $(INCDIR)/nccl.h : nccl.h.in
 # NCCL_VERSION(X,Y,Z) ((X) * 1000 + (Y) * 100 + (Z))
@@ -70,10 +75,15 @@ $(INCDIR)/nccl.h : nccl.h.in
 $(LIBDIR)/$(LIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Linking    %-35s > %s\n" $(LIBTARGET) $@
 	mkdir -p $(LIBDIR)
-	#$(CXX) $(CXXFLAGS) -shared -Wl,--no-as-needed -Wl,-soname,$(LIBSONAME) -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -shared -Wl,--no-as-needed -Wl,-soname,$(LIBSONAME) -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
 	$(CXX) $(CXXFLAGS) -shared -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS) 
 	ln -sf $(LIBSONAME) $(LIBDIR)/$(LIBNAME)
 	ln -sf $(LIBTARGET) $(LIBDIR)/$(LIBSONAME)
+
+$(LIBDIR)/$(SHARELIBNAME): $(LIBOBJ) $(DEVICELIB)
+	@printf "Linking    %-35s > %s\n" $(SHARELIBNAME) $@
+	mkdir -p $(LIBDIR)
+	$(CXX) $(CXXFLAGS) -dynamiclib -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
 
 $(LIBDIR)/$(STATICLIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Archiving  %-35s > %s\n" $(STATICLIBTARGET) $@
