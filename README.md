@@ -49,6 +49,8 @@ To install NCCL on Mac OS X 10.13, first ensure Homebrew, XCode 9(.4.1) and CUDA
 
 Note: the official and tested builds of NCCL can be downloaded from: <https://developer.nvidia.com/nccl>. You can skip the following build steps if you choose to use the official builds.
 
+1, For generating libraries based on gcc
+
 To build the library :
 
 ```shell
@@ -70,12 +72,26 @@ By default, NCCL is compiled for all supported architectures. To accelerate the 
 make -j src.build NVCC_GENCODE="-gencode=arch=compute_70,code=sm_70"
 ```
 
+2, For generating libraries based on clang++
+
+To build the fat library compatible with *-std=c++14*, as this version is consistent with JAX:
+
+```shell
+make src.build CXX=clang++ -j8
+```
+
 ## Install
 
-Simply run
+1, Simply run
 
 ```shell
 make install
+```
+
+2, Simply run
+
+```shell
+make install PREFIX=/usr/local/nccl-2.5.7
 ```
 
 ## Tests
