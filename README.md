@@ -107,7 +107,13 @@ In fact, not all functions of NCCL works on Mac OS X.
 ## Todo
 
 1, whether dylib is needed?  
-refer to <https://developer.apple.com/forums/thread/26542>
+
+* refer to <https://developer.apple.com/forums/thread/26542>
+
+2, NCCL 2.5.6 development guideline  
+
+* refer to <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/index.html>  
+* As the first milestone aims at migration of source code of 2.5.7 and partially support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have.
 
 ## Copyright
 
