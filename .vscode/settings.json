@@ -2,6 +2,9 @@
     "files.associations": {
         "*.in": "cpp",
         "memory_resource": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "queue": "cpp",
+        "stack": "cpp",
+        "random": "cpp"
     }
 }

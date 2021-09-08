@@ -78,6 +78,7 @@ To build the fat library compatible with *-std=c++14*, as this version is consis
 
 ```shell
 make src.build CXX=clang++ -j8
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 -j18
 ```
 
 ## Install
@@ -92,6 +93,12 @@ make install
 
 ```shell
 make install PREFIX=/usr/local/nccl-2.5.7
+```
+
+Install on local folder
+
+```shell
+make install PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7
 ```
 
 ## Tests

@@ -12,6 +12,7 @@
 #include "socket.h"
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/syslimits.h>
 
 struct bootstrapNetComm {
   int fd;
@@ -159,12 +160,11 @@ static ncclResult_t setFilesLimit() {
   struct rlimit filesLimit;
   SYSCHECK(getrlimit(RLIMIT_NOFILE, &filesLimit), "getrlimit");
   filesLimit.rlim_cur = filesLimit.rlim_max;
-  #if defined(__APPLE__) && defined(__MACH__)
   // refer to https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/setrlimit.2.html
   if (filesLimit.rlim_cur > OPEN_MAX) {
     filesLimit.rlim_cur = OPEN_MAX;
+    TRACE(NCCL_INIT, "adjust RLIMIT_NOFILE limit to %llu",  filesLimit.rlim_cur);
   }
-  #endif
   SYSCHECK(setrlimit(RLIMIT_NOFILE, &filesLimit), "setrlimit");
   return ncclSuccess;
 }
