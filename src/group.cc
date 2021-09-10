@@ -168,13 +168,11 @@ ncclResult_t ncclGroupEnd() {
         if (err == EBUSY) continue;
         if (err != 0) {
           ret = ncclSystemError;
-          /* Print pthread_threadid_np */
-          INFO(NCCL_ALL,"pthread_threadid_np[%d]=%d %s:%d", i, err, __FILE__, __LINE__); 
+          WARN("pthread_threadid_np called failed: %d, then returned ncclSystemError", err);
         }
         if (args->ret != ncclSuccess) {
           ret = args->ret;
-          /* Print pthread_threadid_np */
-          INFO(NCCL_ALL,"ret=%d, %s:%d", ret, __FILE__, __LINE__); 
+          WARN("pthread_threadid_np called failed: %d in internal calling", args->ret);
         }
         doneArray[i] = 1;
         done--;

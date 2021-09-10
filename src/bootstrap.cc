@@ -160,11 +160,12 @@ static ncclResult_t setFilesLimit() {
   struct rlimit filesLimit;
   SYSCHECK(getrlimit(RLIMIT_NOFILE, &filesLimit), "getrlimit");
   filesLimit.rlim_cur = filesLimit.rlim_max;
+  // see: orlando already fixed this issue, "setrlimit cause warning on osx: [0] bootstrap.cc:162 NCCL WARN Call to setrlimit failed : Invalid argument" 
   // refer to https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/setrlimit.2.html
   if (filesLimit.rlim_cur > OPEN_MAX) {
     filesLimit.rlim_cur = OPEN_MAX;
+    INFO(NCCL_ALL, "adjust filesLimit.rlim_cur to OPEN_MAX = %d", filesLimit.rlim_cur);
   }
-  INFO(NCCL_INIT, "adjust RLIMIT_NOFILE limit to %llu",  filesLimit.rlim_cur);
   SYSCHECK(setrlimit(RLIMIT_NOFILE, &filesLimit), "setrlimit");
   return ncclSuccess;
 }
@@ -176,7 +177,6 @@ static void *bootstrapRoot(void* listenComm) {
   ncclNetHandle_t zero = { 0 }; // for sanity checking
   void* tmpComm;
   ncclResult_t res;
-  // setrlimit cause warning on osx: [0] bootstrap.cc:162 NCCL WARN Call to setrlimit failed : Invalid argument 
   setFilesLimit(); 
 
   TRACE(NCCL_INIT, "BEGIN");
