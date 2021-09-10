@@ -49,7 +49,13 @@ struct ncclAsyncArgs {
   };
 };
 
+#if defined(__APPLE__) && defined(__MACH__)
+// refer to https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Thread_002dLocal.html
+__thread struct ncclAsyncArgs ncclGroupArgs[MAX_ASYNC_OPS];
+// _Thread_local struct ncclAsyncArgs ncclGroupArgs[MAX_ASYNC_OPS];
+#else
 thread_local struct ncclAsyncArgs ncclGroupArgs[MAX_ASYNC_OPS];
+#endif
 
 #define CHECK(a) do { \
   if ((args->ret = (a)) != ncclSuccess) { \

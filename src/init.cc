@@ -837,6 +837,7 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
     goto end;
   }
 
+  INFO(NCCL_ALL, "ncclAsyncMode: %d, res: %d, parameters: newcomm=%p, nranks=%d, commId.internal=%.128s, myrank=%d, cudaDev=%d", ncclAsyncMode(), res, newcomm, nranks, commId.internal, myrank, cudaDev);
   if (ncclAsyncMode()) {
     NCCLCHECKGOTO(ncclAsyncInit(ncclCommInitRankSync, newcomm, nranks, commId, myrank, cudaDev), res, end);
   } else {
