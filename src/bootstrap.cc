@@ -163,8 +163,8 @@ static ncclResult_t setFilesLimit() {
   // refer to https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/setrlimit.2.html
   if (filesLimit.rlim_cur > OPEN_MAX) {
     filesLimit.rlim_cur = OPEN_MAX;
-    TRACE(NCCL_INIT, "adjust RLIMIT_NOFILE limit to %llu",  filesLimit.rlim_cur);
   }
+  INFO(NCCL_INIT, "adjust RLIMIT_NOFILE limit to %llu",  filesLimit.rlim_cur);
   SYSCHECK(setrlimit(RLIMIT_NOFILE, &filesLimit), "setrlimit");
   return ncclSuccess;
 }

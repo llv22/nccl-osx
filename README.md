@@ -78,18 +78,23 @@ To build the fat library compatible with *-std=c++14*, as this version is consis
 
 ```shell
 make src.build CXX=clang++ -j8
-make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 -j18
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 -j12
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 TRACE=1 -j12 #enable trace for compiling
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 TRACE=1 NVCC_GENCODE="-gencode=arch=compute_61,code=sm_61" -j12 #enable trace for compiling only for GTX1080, refer to https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/, about 6 minutes
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/build TRACE=1 NVCC_GENCODE="-gencode=arch=compute_61,code=sm_61" -j12
 ```
+
+refer to <https://github.com/NVIDIA/nccl/issues/197>
 
 ## Install
 
-1, Simply run
+1, install on default local /usr/local
 
 ```shell
 make install
 ```
 
-2, Simply run
+2, install on customized location $PREFIX
 
 ```shell
 make install PREFIX=/usr/local/nccl-2.5.7

@@ -166,8 +166,16 @@ ncclResult_t ncclGroupEnd() {
       if (args->funcType == ASYNC_FUNC_INIT && doneArray[i] == 0) {
         int err = pthread_threadid_np(ncclGroupThreads[i], NULL);
         if (err == EBUSY) continue;
-        if (err != 0) ret = ncclSystemError;
-        if (args->ret != ncclSuccess) ret = args->ret;
+        if (err != 0) {
+          ret = ncclSystemError;
+          /* Print pthread_threadid_np */
+          INFO(NCCL_ALL,"pthread_threadid_np[%d]=%d %s:%d", i, err, __FILE__, __LINE__); 
+        }
+        if (args->ret != ncclSuccess) {
+          ret = args->ret;
+          /* Print pthread_threadid_np */
+          INFO(NCCL_ALL,"ret=%d, %s:%d", ret, __FILE__, __LINE__); 
+        }
         doneArray[i] = 1;
         done--;
       }

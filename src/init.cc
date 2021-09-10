@@ -830,7 +830,9 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
   // Make sure the CUDA runtime is initialized.
   CUDACHECKGOTO(cudaFree(NULL), res, end);
 
+  INFO(NCCL_ALL,"Before PtrCheck");
   NCCLCHECKGOTO(PtrCheck(newcomm, "CommInitRank", "newcomm"), res, end);
+  INFO(NCCL_ALL,"After PtrCheck");
   if (nranks < 1 || myrank < 0 || myrank >= nranks) {
     WARN("Invalid rank requested : %d/%d", myrank, nranks);
     res = ncclInvalidArgument;
@@ -840,7 +842,9 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
   if (ncclAsyncMode()) {
     NCCLCHECKGOTO(ncclAsyncInit(ncclCommInitRankSync, newcomm, nranks, commId, myrank, cudaDev), res, end);
   } else {
+    INFO(NCCL_ALL,"before ncclCommInitRankSync");
     NCCLCHECKGOTO(ncclCommInitRankSync(newcomm, nranks, commId, myrank, cudaDev), res, end);
+    INFO(NCCL_ALL,"after ncclCommInitRankSync");
   }
 end:
   if (ncclAsyncMode()) return ncclAsyncErrCheck(res);
@@ -870,7 +874,9 @@ ncclResult_t ncclCommInitAll(ncclComm_t* comms, int ndev, const int* devlist) {
     // Ignore return codes .. we need to call ncclGroupEnd to clean up anyway
     ncclCommInitRankDev(comms+i, ndev, uniqueId, i, devlist ? devlist[i] : i);
   }
+  INFO(NCCL_ALL, "before entering ncclGroupEnd()");
   NCCLCHECK(ncclGroupEnd());
+  INFO(NCCL_ALL, "after entering ncclGroupEnd()");
   return ncclSuccess;
 }
 
