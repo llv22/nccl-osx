@@ -164,15 +164,16 @@ ncclResult_t ncclGroupEnd() {
     for (int i=0; i<ncclGroupIndex; i++) {
       struct ncclAsyncArgs* args = ncclGroupArgs+i;
       if (args->funcType == ASYNC_FUNC_INIT && doneArray[i] == 0) {
-        int err = pthread_threadid_np(ncclGroupThreads[i], NULL);
+        //see: orlando replace pthread_tryjoin_np with pthread_join, as no compatible version on mac for the former
+        int err = pthread_join(ncclGroupThreads[i], NULL);
         if (err == EBUSY) continue;
         if (err != 0) {
           ret = ncclSystemError;
-          WARN("pthread_threadid_np called failed: %d, then returned ncclSystemError", err);
+          WARN("pthread_join called failed, return code: %d (translated to ncclSystemError)", err);
         }
         if (args->ret != ncclSuccess) {
           ret = args->ret;
-          WARN("pthread_threadid_np called failed: %d in internal calling", args->ret);
+          WARN("retrieve ncclGroupArgs[%d] failed, return code: %d", i, args->ret);
         }
         doneArray[i] = 1;
         done--;

@@ -870,9 +870,7 @@ ncclResult_t ncclCommInitAll(ncclComm_t* comms, int ndev, const int* devlist) {
     // Ignore return codes .. we need to call ncclGroupEnd to clean up anyway
     ncclCommInitRankDev(comms+i, ndev, uniqueId, i, devlist ? devlist[i] : i);
   }
-  INFO(NCCL_ALL, "before entering ncclGroupEnd()");
   NCCLCHECK(ncclGroupEnd());
-  INFO(NCCL_ALL, "after entering ncclGroupEnd()");
   return ncclSuccess;
 }
 

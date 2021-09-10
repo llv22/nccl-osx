@@ -46,6 +46,7 @@ NCCL requires at least CUDA 7.0 and Kepler or newer GPUs. For PCIe based platfor
 To install NCCL on Mac OS X 10.13, first ensure Homebrew, XCode 9(.4.1) and CUDA-SDK (10.0 or 10.1) are properly installed.  
 
 **Currently I used XCode 10.1, CUDA-SDK(10.1), makefile installed by Homebrew for compiling.**
+**Base line version: <https://github.com/NVIDIA/nccl/blob/v2.5.7-1>**
 
 Note: the official and tested builds of NCCL can be downloaded from: <https://developer.nvidia.com/nccl>. You can skip the following build steps if you choose to use the official builds.
 
@@ -122,7 +123,7 @@ In fact, not all functions of NCCL works on Mac OS X.
 
 * refer to <https://developer.apple.com/forums/thread/26542>
 
-2, NCCL 2.5.6 development guideline  
+2, NCCL 2.5.6 development guideline (Currently Orlando used 2.5.7-1 as based line, but documentation should keep consistent with 2.5.6)  
 
 * refer to <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/index.html>  
 * As the first milestone aims at migration of source code of 2.5.7 and partially support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have.
