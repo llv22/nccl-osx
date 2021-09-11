@@ -844,7 +844,7 @@ typedef enum nvmlReturn_enum
     NVML_ERROR_IN_USE = 19,                  //!< An operation cannot be performed because the GPU is currently in use
     NVML_ERROR_MEMORY = 20,                  //!< Insufficient memory
     NVML_ERROR_NO_DATA = 21,                 //!< No data
-    NVML_ERROR_VGPU_ECC_NOT_SUPPORTED = 22,  //!< The requested vgpu operation is not available on target device, becasue ECC is enabled
+    NVML_ERROR_VGPU_ECC_NOT_SUPPORTED = 22,  //!< The requested vgpu operation is not available on target device, because ECC is enabled
     NVML_ERROR_INSUFFICIENT_RESOURCES = 23,  //!< Ran out of critical resources, other than memory
     NVML_ERROR_UNKNOWN = 999                 //!< An internal driver error occurred
 } nvmlReturn_t;

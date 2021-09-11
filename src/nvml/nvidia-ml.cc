@@ -17,6 +17,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/**
+ * Mandatoary exported function 0: nvmlErrorString.
+ */ 
 const char* nvmlErrorString(nvmlReturn_t result) {
     if (NVML_SUCCESS == result)
     {
@@ -93,7 +96,7 @@ const char* nvmlErrorString(nvmlReturn_t result) {
         return "No data";
     }
     else if (NVML_ERROR_VGPU_ECC_NOT_SUPPORTED == result) {
-        return "The requested vgpu operation is not available on target device, becasue ECC is enabled";
+        return "The requested vgpu operation is not available on target device, because ECC is enabled";
     }
     else if (NVML_ERROR_INSUFFICIENT_RESOURCES == result) {
         return "Ran out of critical resources, other than memory";
@@ -102,6 +105,90 @@ const char* nvmlErrorString(nvmlReturn_t result) {
         return "An internal driver error occurred";
     }
     else {
-        return "Unknown error";
+        return "Unexpected error in NVML system domain";
     }
+}
+
+/**
+ * Mandatoary exported function 1: nvmlInit_v2.
+ * This API will be remapped to nvmlInit in nvml.h.
+ */
+nvmlReturn_t nvmlInit(void) {
+
+}
+
+/**
+ * Mandatoary exported function 2: nvmlShutdown.
+ */ 
+nvmlReturn_t nvmlShutdown(void) {
+
+}
+
+/**
+ * Mandatoary exported function 3: nvmlDeviceGetHandleByPciBusId_v2.
+ * This API will be remapped to nvmlDeviceGetHandleByPciBusId in nvml.h.
+ */ 
+nvmlReturn_t nvmlDeviceGetHandleByPciBusId(const char *pciBusId, nvmlDevice_t *device) {
+
+}
+
+/**
+ * Mandatoary exported function 4: nvmlDeviceGetNvLinkState.
+ */ 
+nvmlReturn_t nvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive) {
+
+
+}
+
+/**
+ * Mandatoary exported function 5: nvmlDeviceGetNvLinkRemotePciInfo_v2.
+ * This API will be remapped to nvmlDeviceGetNvLinkRemotePciInfo in nvml.h.
+ */ 
+nvmlReturn_t nvmlDeviceGetNvLinkRemotePciInfo(nvmlDevice_t device, unsigned int link, nvmlPciInfo_t *pci) {
+
+}
+
+/**
+ * Mandatoary exported function 6: nvmlDeviceGetNvLinkCapability.
+ */ 
+nvmlReturn_t nvmlDeviceGetNvLinkCapability(nvmlDevice_t device, unsigned int link,
+                                                   nvmlNvLinkCapability_t capability, unsigned int *capResult) {
+
+}
+
+/**
+ * Mandatoary exported function 7: nvmlDeviceGetCudaComputeCapability.
+ */ 
+nvmlReturn_t nvmlDeviceGetCudaComputeCapability(nvmlDevice_t device, int *major, int *minor) {
+
+}
+
+/**
+ * Optional exported function 8: nvmlDeviceGetMinorNumber.
+ */ 
+nvmlReturn_t nvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int *minorNumber) {
+    return NVML_ERROR_NOT_SUPPORTED;
+}
+
+/**
+ * Optional exported function 9: nvmlDeviceGetIndex.
+ */ 
+nvmlReturn_t nvmlDeviceGetIndex(nvmlDevice_t device, unsigned int *index) {
+    return NVML_ERROR_NOT_SUPPORTED;
+}
+
+/**
+ * Optional exported function 10: nvmlDeviceGetHandleByIndex_v2.
+ * This API will be remapped to nvmlDeviceGetHandleByIndex in nvml.h.
+ */ 
+nvmlReturn_t nvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t *device) {
+    return NVML_ERROR_NOT_SUPPORTED;
+}
+
+/**
+ * Optional exported function 11: nvmlDeviceGetPciInfo_v3.
+ * This API will be remapped to nvmlDeviceGetPciInfo in nvml.h.
+ */ 
+nvmlReturn_t nvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t *pci) {
+    return NVML_ERROR_NOT_SUPPORTED;
 }

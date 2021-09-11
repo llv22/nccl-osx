@@ -56,7 +56,7 @@ NVLDFLAGS  := -L${CUDA_LIB} -lcudart -lrt
 ########## GCOV ##########
 GCOV ?= 0 # disable by default.
 GCOV_FLAGS := $(if $(filter 0,${GCOV} ${DEBUG}),,--coverage) # only gcov=1 and debug =1
-CXXFLAGS  += ${GCOV_FLAGS}
+CXXFLAGS  += ${GCOV_FLAGS} -DNVML_NO_UNVERSIONED_FUNC_DEFS=true
 NVCUFLAGS += ${GCOV_FLAGS:%=-Xcompiler %}
 LDFLAGS   += ${GCOV_FLAGS}
 NVLDFLAGS   += ${GCOV_FLAGS:%=-Xcompiler %}
