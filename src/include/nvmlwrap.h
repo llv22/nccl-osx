@@ -143,20 +143,33 @@ typedef struct nvmlPciInfo_st
 } nvmlPciInfo_t;
 /* End of nvml.h */
 
+//see: used in init.cc Line795, only have to load libnvidia-ml.so.1, not blocker
 ncclResult_t wrapNvmlSymbols(void);
 
+//see: used in init.cc Line796
 ncclResult_t wrapNvmlInit(void);
+//see: used in init.cc Line808
 ncclResult_t wrapNvmlShutdown(void);
+//see: used in topo.cc Line574
 ncclResult_t wrapNvmlDeviceGetHandleByPciBusId(const char* pciBusId, nvmlDevice_t* device);
-ncclResult_t wrapNvmlDeviceGetIndex(nvmlDevice_t device, unsigned* index);
-ncclResult_t wrapNvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t *device);
-ncclResult_t wrapNvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t* pci);
+//see: used in topo.cc Line250
 ncclResult_t wrapNvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive);
+//see: used in topo.cc Line254
 ncclResult_t wrapNvmlDeviceGetNvLinkRemotePciInfo(nvmlDevice_t device, unsigned int link, nvmlPciInfo_t *pci);
+//see: used in topo.cc Line246
 ncclResult_t wrapNvmlDeviceGetNvLinkCapability(nvmlDevice_t device, unsigned int link,
                                                    nvmlNvLinkCapability_t capability, unsigned int *capResult);
-ncclResult_t wrapNvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int* minorNumber);
+//see: used in topo.cc Line229
 ncclResult_t wrapNvmlDeviceGetCudaComputeCapability(nvmlDevice_t device, int* major, int* minor);
+
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int* minorNumber);
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetIndex(nvmlDevice_t device, unsigned* index);
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t *device);
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t* pci);
 
 #endif // NVML_DIRECT
 

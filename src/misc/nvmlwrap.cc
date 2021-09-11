@@ -29,6 +29,7 @@ static nvmlReturn_t (*nvmlInternalDeviceGetCudaComputeCapability)(nvmlDevice_t d
 // Used to make the NVML library calls thread safe
 pthread_mutex_t nvmlLock = PTHREAD_MUTEX_INITIALIZER;
 
+//see: used in init.cc Line795, only have to load libnvidia-ml.so.1, not blocker
 ncclResult_t wrapNvmlSymbols(void) {
   if (nvmlState == nvmlInitialized)
     return ncclSuccess;
@@ -45,12 +46,13 @@ ncclResult_t wrapNvmlSymbols(void) {
   void* tmp;
   void** cast;
 
+  INFO(NCCL_ALL, "prepare to dlopen(\"libnvidia-ml.so.1\", RTLD_NOW)");
   nvmlhandle=dlopen("libnvidia-ml.so.1", RTLD_NOW);
   if (!nvmlhandle) {
     WARN("Failed to open libnvidia-ml.so.1");
     goto teardown;
   }
-
+  INFO(NCCL_ALL, "finish to dlopen(\"libnvidia-ml.so.1\", RTLD_NOW)");
 #define LOAD_SYM(handle, symbol, funcptr) do {         \
     cast = (void**)&funcptr;                             \
     tmp = dlsym(handle, symbol);                         \
@@ -100,10 +102,12 @@ teardown:
 
   if (nvmlhandle != NULL) dlclose(nvmlhandle);
   nvmlState = nvmlError;
+  INFO(NCCL_ALL, "failed to dlopen(\"libnvidia-ml.so.1\", RTLD_NOW)");
   return ncclSystemError;
 }
 
 
+//see: used in init.cc Line796
 ncclResult_t wrapNvmlInit(void) {
   if (nvmlInternalInit == NULL) {
     WARN("lib wrapper not initialized.");
@@ -118,6 +122,7 @@ ncclResult_t wrapNvmlInit(void) {
   return ncclSuccess;
 }
 
+//see: used in init.cc Line808
 ncclResult_t wrapNvmlShutdown(void) {
   if (nvmlInternalShutdown == NULL) {
     WARN("lib wrapper not initialized.");
@@ -132,6 +137,7 @@ ncclResult_t wrapNvmlShutdown(void) {
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line574
 ncclResult_t wrapNvmlDeviceGetHandleByPciBusId(const char* pciBusId, nvmlDevice_t* device) {
   if (nvmlInternalDeviceGetHandleByPciBusId == NULL) {
     WARN("lib wrapper not initialized.");
@@ -147,66 +153,7 @@ ncclResult_t wrapNvmlDeviceGetHandleByPciBusId(const char* pciBusId, nvmlDevice_
   return ncclSuccess;
 }
 
-ncclResult_t wrapNvmlDeviceGetIndex(nvmlDevice_t device, unsigned* index) {
-  if (nvmlInternalDeviceGetIndex == NULL) {
-    WARN("lib wrapper not initialized.");
-    return ncclInternalError;
-  }
-  nvmlReturn_t ret;
-  NVMLLOCKCALL(nvmlInternalDeviceGetIndex(device, index), ret);
-  if (ret != NVML_SUCCESS) {
-    WARN("nvmlDeviceGetIndex() failed: %s ",
-        nvmlInternalErrorString(ret));
-    return ncclSystemError;
-  }
-  return ncclSuccess;
-}
-
-ncclResult_t wrapNvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t* device) {
-  if (nvmlInternalDeviceGetHandleByIndex == NULL) {
-    WARN("lib wrapper not initialized.");
-    return ncclInternalError;
-  }
-  nvmlReturn_t ret;
-  NVMLLOCKCALL(nvmlInternalDeviceGetHandleByIndex(index, device), ret);
-  if (ret != NVML_SUCCESS) {
-    WARN("nvmlDeviceGetHandleByIndex() failed: %s ",
-        nvmlInternalErrorString(ret));
-    return ncclSystemError;
-  }
-  return ncclSuccess;
-}
-
-ncclResult_t wrapNvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t* pci) {
-  if (nvmlInternalDeviceGetPciInfo == NULL) {
-    WARN("lib wrapper not initialized.");
-    return ncclInternalError;
-  }
-  nvmlReturn_t ret;
-  NVMLLOCKCALL(nvmlInternalDeviceGetPciInfo(device, pci), ret);
-  if (ret != NVML_SUCCESS) {
-    WARN("nvmlDeviceGetPciInfo() failed: %s ",
-        nvmlInternalErrorString(ret));
-    return ncclSystemError;
-  }
-  return ncclSuccess;
-}
-
-ncclResult_t wrapNvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int* minorNumber) {
-  if (nvmlInternalDeviceGetMinorNumber == NULL) {
-    WARN("lib wrapper not initialized.");
-    return ncclInternalError;
-  }
-  nvmlReturn_t ret;
-  NVMLLOCKCALL(nvmlInternalDeviceGetMinorNumber(device, minorNumber), ret);
-  if (ret != NVML_SUCCESS) {
-    WARN("nvmlDeviceGetMinorNumber() failed: %s ",
-        nvmlInternalErrorString(ret));
-    return ncclSystemError;
-  }
-  return ncclSuccess;
-}
-
+//see: used in topo.cc Line250
 ncclResult_t wrapNvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive) {
   if (nvmlInternalDeviceGetNvLinkState == NULL) {
     /* Do not warn, this symbol is optional. */
@@ -223,6 +170,7 @@ ncclResult_t wrapNvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line254
 ncclResult_t wrapNvmlDeviceGetNvLinkRemotePciInfo(nvmlDevice_t device, unsigned int link, nvmlPciInfo_t *pci) {
   if (nvmlInternalDeviceGetNvLinkRemotePciInfo == NULL) {
     /* Do not warn, this symbol is optional. */
@@ -239,6 +187,7 @@ ncclResult_t wrapNvmlDeviceGetNvLinkRemotePciInfo(nvmlDevice_t device, unsigned 
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line246
 ncclResult_t wrapNvmlDeviceGetNvLinkCapability(nvmlDevice_t device, unsigned int link,
     nvmlNvLinkCapability_t capability, unsigned int *capResult) {
   if (nvmlInternalDeviceGetNvLinkCapability == NULL) {
@@ -256,6 +205,7 @@ ncclResult_t wrapNvmlDeviceGetNvLinkCapability(nvmlDevice_t device, unsigned int
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line229
 ncclResult_t wrapNvmlDeviceGetCudaComputeCapability(nvmlDevice_t device, int* major, int* minor) {
   if (nvmlInternalDeviceGetNvLinkCapability == NULL) {
     WARN("lib wrapper not initialized.");
@@ -270,4 +220,69 @@ ncclResult_t wrapNvmlDeviceGetCudaComputeCapability(nvmlDevice_t device, int* ma
   }
   return ncclSuccess;
 }
+
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int* minorNumber) {
+  if (nvmlInternalDeviceGetMinorNumber == NULL) {
+    WARN("lib wrapper not initialized.");
+    return ncclInternalError;
+  }
+  nvmlReturn_t ret;
+  NVMLLOCKCALL(nvmlInternalDeviceGetMinorNumber(device, minorNumber), ret);
+  if (ret != NVML_SUCCESS) {
+    WARN("nvmlDeviceGetMinorNumber() failed: %s ",
+        nvmlInternalErrorString(ret));
+    return ncclSystemError;
+  }
+  return ncclSuccess;
+}
+
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetIndex(nvmlDevice_t device, unsigned* index) {
+  if (nvmlInternalDeviceGetIndex == NULL) {
+    WARN("lib wrapper not initialized.");
+    return ncclInternalError;
+  }
+  nvmlReturn_t ret;
+  NVMLLOCKCALL(nvmlInternalDeviceGetIndex(device, index), ret);
+  if (ret != NVML_SUCCESS) {
+    WARN("nvmlDeviceGetIndex() failed: %s ",
+        nvmlInternalErrorString(ret));
+    return ncclSystemError;
+  }
+  return ncclSuccess;
+}
+
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t* device) {
+  if (nvmlInternalDeviceGetHandleByIndex == NULL) {
+    WARN("lib wrapper not initialized.");
+    return ncclInternalError;
+  }
+  nvmlReturn_t ret;
+  NVMLLOCKCALL(nvmlInternalDeviceGetHandleByIndex(index, device), ret);
+  if (ret != NVML_SUCCESS) {
+    WARN("nvmlDeviceGetHandleByIndex() failed: %s ",
+        nvmlInternalErrorString(ret));
+    return ncclSystemError;
+  }
+  return ncclSuccess;
+}
+
+//see: not referenced
+ncclResult_t wrapNvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t* pci) {
+  if (nvmlInternalDeviceGetPciInfo == NULL) {
+    WARN("lib wrapper not initialized.");
+    return ncclInternalError;
+  }
+  nvmlReturn_t ret;
+  NVMLLOCKCALL(nvmlInternalDeviceGetPciInfo(device, pci), ret);
+  if (ret != NVML_SUCCESS) {
+    WARN("nvmlDeviceGetPciInfo() failed: %s ",
+        nvmlInternalErrorString(ret));
+    return ncclSystemError;
+  }
+  return ncclSuccess;
+}
+
 #endif
