@@ -65,7 +65,6 @@ ncclResult_t wrapNvmlSymbols(void) {
   void* tmp;
   void** cast;
 
-  INFO(NCCL_ALL, "prepare to dlopen(\"libnvidia-ml.so.1\", RTLD_NOW)");
   nvmlhandle=dlopen("libnvidia-ml.so.1", RTLD_NOW);
   if (!nvmlhandle) {
     WARN("Failed to open libnvidia-ml.so.1");
