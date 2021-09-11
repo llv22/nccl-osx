@@ -80,12 +80,9 @@ To build the fat library compatible with *-std=c++14*, as this version is consis
 ```shell
 make src.build CXX=clang++ -j8
 make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 -j12
-make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 TRACE=1 -j12 #enable trace for compiling
-make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 TRACE=1 NVCC_GENCODE="-gencode=arch=compute_61,code=sm_61" -j12 #enable trace for compiling only for GTX1080, refer to https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/, about 6 minutes
-make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/build TRACE=1 NVCC_GENCODE="-gencode=arch=compute_61,code=sm_61" -j12
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 TRACE=1 -j12 #enable trace for compiling, about 16 minutes
+make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7 TRACE=1 NVCC_GENCODE="-gencode=arch=compute_61,code=sm_61" -j12 #enable trace for compiling only for GTX1080, refer to https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/, about 5 minutes
 ```
-
-refer to <https://github.com/NVIDIA/nccl/issues/197>
 
 ## Install
 
@@ -125,8 +122,9 @@ In fact, not all functions of NCCL works on Mac OS X.
 
 2, NCCL 2.5.6 development guideline (Currently Orlando used 2.5.7-1 as based line, but documentation should keep consistent with 2.5.6)  
 
-* refer to <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/index.html>  
-* As the first milestone aims at migration of source code of 2.5.7 and partially support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have.
+* As the first milestone aims at migration of source code of 2.5.7 and partially support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have
+* General development guide, refer to <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/index.html>  
+* About enabling tracing and logging for debugging purposes, refer to <https://github.com/NVIDIA/nccl/issues/197> and environment variable for controlling log of nccl 2.5.6 in <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/env.htm>
 
 ## Copyright
 
