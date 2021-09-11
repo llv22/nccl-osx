@@ -14,12 +14,14 @@ LIBSRCFILES := init.cc channel.cc bootstrap.cc transport.cc enqueue.cc group.cc 
 		transport/p2p.cc transport/shm.cc transport/net.cc transport/net_socket.cc transport/net_ib.cc \
                 collectives/all_reduce.cc collectives/all_gather.cc collectives/broadcast.cc collectives/reduce.cc collectives/reduce_scatter.cc \
                 graph/topo.cc graph/paths.cc graph/search.cc graph/connect.cc graph/rings.cc graph/trees.cc graph/tuning.cc
+SNVMLLIBSRCFILES := nvml/nvidia-ml.cc
 
 ##### lib files
 LIBNAME     := libnccl.so
 SHLIBEXT 	:= dylib
 SHARELIBNAME  := libnccl.$(SHLIBEXT)
 STATICLIBNAME := libnccl_static.a
+SNVMLLIBNAME := libnvidia-ml.so.1
 ##### pkgconfig files
 PKGCONFIGFILE := nccl.pc
 ##### dirs
@@ -39,7 +41,9 @@ SHARELIBTARGET  := $(SHARELIBNAME:%=%.$(NCCL_MAJOR).$(NCCL_MINOR).$(NCCL_PATCH))
 STATICLIBTARGET := $(STATICLIBNAME)
 PKGTARGET  := $(PKGCONFIGFILE)
 LIBOBJ     := $(LIBSRCFILES:%.cc=$(OBJDIR)/%.o)
+SNVMLLIBOBJ     := $(SNVMLLIBSRCFILES:%.cc=$(OBJDIR)/%.o)
 DEPFILES   := $(LIBOBJ:%.o=%.d)
+DEPSNVMLFILES   := $(SNVMLLIBOBJ:%.o=%.d)
 LDFLAGS    += -L${CUDA_LIB} -l$(CUDARTLIB) -lpthread  -ldl
 
 DEVICELIB  := $(BUILDDIR)/obj/collectives/device/colldevice.a
@@ -51,7 +55,7 @@ lib : $(INCTARGETS) $(LIBDIR)/$(LIBTARGET) $(PKGDIR)/$(PKGTARGET)
 
 staticlib : $(LIBDIR)/$(STATICLIBTARGET)
 
-sharelib : $(LIBDIR)/$(SHARELIBTARGET)
+sharelib : $(LIBDIR)/$(SHARELIBTARGET) $(LIBDIR)/$(SNVMLLIBNAME)
 
 $(DEVICELIB): ALWAYS_REBUILD
 	$(MAKE) -C collectives/device
@@ -60,7 +64,9 @@ $(DEVICELIB): ALWAYS_REBUILD
 ALWAYS_REBUILD:
 
 -include $(DEPFILES)
+-include $(DEPSNVMLFILES)
 $(LIBDIR)/$(LIBTARGET) $(LIBDIR)/$(STATICLIBTARGET) $(LIBDIR)/$(SHARELIBTARGET) : $(LIBOBJ)
+$(LIBDIR)/$(SNVMLLIBNAME) : $(SNVMLLIBOBJ)
 
 $(INCDIR)/nccl.h : nccl.h.in
 # NCCL_VERSION(X,Y,Z) ((X) * 1000 + (Y) * 100 + (Z))
@@ -80,6 +86,11 @@ $(LIBDIR)/$(LIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	$(CXX) $(CXXFLAGS) -shared -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
 	ln -sf $(LIBSONAME) $(LIBDIR)/$(LIBNAME)
 	ln -sf $(LIBTARGET) $(LIBDIR)/$(LIBSONAME)
+
+$(LIBDIR)/$(SNVMLLIBNAME): $(SNVMLLIBOBJ) 
+	@printf "Linking    %-35s > %s\n" $(SNVMLLIBNAME) $@
+	mkdir -p $(LIBDIR)
+	$(CXX) $(CXXFLAGS) -shared -o $@ $(SNVMLLIBOBJ) $(LDFLAGS)
 
 $(LIBDIR)/$(SHARELIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Linking    %-35s > %s\n" $(SHARELIBTARGET) $@
