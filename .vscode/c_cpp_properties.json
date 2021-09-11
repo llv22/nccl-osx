@@ -4,6 +4,7 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
+                "/Developer/NVIDIA/CUDA-10.1/include",
                 "/usr/local/cuda/include"
             ],
             "defines": [],
