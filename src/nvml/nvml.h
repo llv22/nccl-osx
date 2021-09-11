@@ -101,6 +101,39 @@ ncclResult_t wrapNvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t *de
 //see: 11 - not referenced
 ncclResult_t wrapNvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t* pci);
 
+so symbols that must be implemented are listed as follow:
+
+/// This section must be implemented in order to make nccl working. ///
+
+//0, mapping to nvmlErrorString in NVML API
+static const char* (*nvmlInternalErrorString)(nvmlReturn_t r);
+//1, mapping to nvmlInit in NVML API
+static nvmlReturn_t (*nvmlInternalInit)(void);
+//2, mapping to nvmlShutdown in NVML API
+static nvmlReturn_t (*nvmlInternalShutdown)(void);
+//3, mapping to nvmlDeviceGetHandleByPciBusId in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetHandleByPciBusId)(const char* pciBusId, nvmlDevice_t* device);
+//4, mapping to nvmlDeviceGetNvLinkState in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetNvLinkState)(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive);
+//5, mapping to nvmlDeviceGetNvLinkRemotePciInfo in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetNvLinkRemotePciInfo)(nvmlDevice_t device, unsigned int link, nvmlPciInfo_t *pci);
+//6, mapping to nvmlDeviceGetNvLinkCapability in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetNvLinkCapability)(nvmlDevice_t device, unsigned int link,
+    nvmlNvLinkCapability_t capability, unsigned int *capResult);
+//7, mapping to nvmlDeviceGetCudaComputeCapability in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetCudaComputeCapability)(nvmlDevice_t device, int* major, int* minor);
+
+/// This section is optional in order to make nccl working. ///
+
+//8, mapping to nvmlDeviceGetMinorNumber in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetMinorNumber)(nvmlDevice_t device, unsigned int* minorNumber);
+//9, mapping to nvmlDeviceGetIndex in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetIndex)(nvmlDevice_t device, unsigned* index);
+//10, mapping to nvmlDeviceGetHandleByIndex in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetHandleByIndex)(unsigned int index, nvmlDevice_t* device);
+//11, mapping to nvmlDeviceGetPciInfo in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetPciInfo)(nvmlDevice_t device, nvmlPciInfo_t* pci);
+
 */
 
 #ifndef __nvml_nvml_h__
