@@ -1,0 +1,12 @@
+# File: symbol.exports
+_nvmlDeviceGetCudaComputeCapability
+_nvmlDeviceGetHandleByIndex
+_nvmlDeviceGetHandleByPciBusId
+_nvmlDeviceGetIndex
+_nvmlDeviceGetMinorNumber
+_nvmlDeviceGetNvLinkCapability
+_nvmlDeviceGetNvLinkRemotePciInfo
+_nvmlDeviceGetNvLinkState
+_nvmlDeviceGetPciInfo
+_nvmlErrorString
+_nvmlShutdown

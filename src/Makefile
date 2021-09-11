@@ -90,7 +90,7 @@ $(LIBDIR)/$(LIBTARGET): $(LIBOBJ) $(DEVICELIB)
 $(LIBDIR)/$(SNVMLLIBNAME): $(SNVMLLIBOBJ) 
 	@printf "Linking    %-35s > %s\n" $(SNVMLLIBNAME) $@
 	mkdir -p $(LIBDIR)
-	$(CXX) $(CXXFLAGS) -dynamiclib -o $@ $(SNVMLLIBOBJ) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -shared -fPIC -exported_symbols_list symbol.exports -o $@ $(SNVMLLIBOBJ) $(LDFLAGS)
 
 $(LIBDIR)/$(SHARELIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Linking    %-35s > %s\n" $(SHARELIBTARGET) $@

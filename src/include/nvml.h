@@ -1817,7 +1817,11 @@ typedef enum nvmlPcieLinkState_enum
  *         - \ref NVML_ERROR_NO_PERMISSION       if NVML does not have permission to talk to the driver
  *         - \ref NVML_ERROR_UNKNOWN             on any unexpected error
  */
+#if defined(__APPLE__) && defined(__MACH__)
+extern "C" nvmlReturn_t nvmlInit_v2(void);
+#else
 nvmlReturn_t DECLDIR nvmlInit_v2(void);
+#endif
 
 /**
  * nvmlInitWithFlags is a variant of nvmlInit(), that allows passing a set of boolean values
