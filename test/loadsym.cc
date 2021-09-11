@@ -7,7 +7,7 @@ int main() {
         printf("error for loading library\n");
         return -1;
     }
-    const char* symbol = "nvmlShutdown";
+    const char* symbol = "nvmlInit";
     void* tmp = dlsym(nvmlhandle, symbol);                         
     if (tmp == NULL) {                                   
       printf("dlsym failed on %s - %s\n", symbol, dlerror());
