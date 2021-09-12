@@ -91,6 +91,9 @@ main(int argc, char** argv)
     ss<<prop.pciDomainID<<":"<<prop.pciBusID<<":"<<prop.pciDeviceID;
     string pciBusId = ss.str();
     printf("composite pciBusId - %s\n", pciBusId.c_str());
+    char* _localBusId = new char[32];
+    snprintf(_localBusId, 32, "%04x:%02x:%02x.%x", prop.pciDomainID, prop.pciBusID, prop.pciDeviceID, 0);
+    printf("composite pciBusId - %s\n", _localBusId);
 /*
 #if CUDART_VERSION >= 9000
     nvmlDevice_t device;

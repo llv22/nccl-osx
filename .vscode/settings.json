@@ -20,6 +20,7 @@
         "vector": "cpp",
         "locale": "cpp",
         "iosfwd": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "string": "cpp"
     }
 }
