@@ -20,7 +20,7 @@ int ncclCudaCompCap() {
 }
 
 ncclResult_t int64ToBusId(int64_t id, char* busId) {
-  sprintf(busId, "%04lx:%02lx:%02lx.%01lx", (id) >> 20, (id & 0xff000) >> 12, (id & 0xff0) >> 4, (id & 0xf));
+  sprintf(busId, "%04llx:%02llx:%02llx.%01llx", (id) >> 20, (id & 0xff000) >> 12, (id & 0xff0) >> 4, (id & 0xf));
   return ncclSuccess;
 }
 

@@ -54,7 +54,7 @@ CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
 int sched_getaffinity(pid_t pid, size_t cpu_size, cpu_set_t *cpu_set)
 {
   int32_t core_count = 0;
-  size_t  len = sizeof(core_count);
+  // size_t  len = sizeof(core_count);
   /*int ret = sysctlbyname(SYSCTL_CORE_COUNT, &core_count, &len, 0, 0);
   if (ret) {
     printf("error while get core count %d\n", ret);
@@ -793,7 +793,10 @@ ncclResult_t ncclCommInitRankSync(ncclComm_t* newcomm, int nranks, ncclUniqueId 
 
   // Make sure all host memory allocation are close to the GPU
   CUDACHECK(cudaSetDevice(cudaDev));
+  #if not defined(__APPLE__) || not defined(__MACH__)
+  // as macOS doesn't support
   NCCLCHECK(setCpuAffinity(cudaDev));
+  #endif 
   ncclResult_t res;
 
   NCCLCHECKGOTO(commAlloc(newcomm, nranks, myrank), res, cleanup);
@@ -833,7 +836,7 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
     goto end;
   }
 
-  INFO(NCCL_ALL, "ncclAsyncMode: %d, res: %d, parameters: newcomm=%p, nranks=%d, commId.internal=%.128s, myrank=%d, cudaDev=%d", ncclAsyncMode(), res, newcomm, nranks, commId.internal, myrank, cudaDev);
+  // INFO(NCCL_ALL, "ncclAsyncMode: %d, res: %d, parameters: newcomm=%p, nranks=%d, commId.internal=%.128s, myrank=%d, cudaDev=%d", ncclAsyncMode(), res, newcomm, nranks, commId.internal, myrank, cudaDev);
   if (ncclAsyncMode()) {
     NCCLCHECKGOTO(ncclAsyncInit(ncclCommInitRankSync, newcomm, nranks, commId, myrank, cudaDev), res, end);
   } else {

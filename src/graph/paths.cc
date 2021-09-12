@@ -114,7 +114,7 @@ static void printNodePaths(struct ncclTopoSystem* system, struct ncclTopoNode* n
       for (int i=0; i<node->paths[t][n].count; i++) {
         struct ncclTopoLink* link = node->paths[t][n].list[i];
         struct ncclTopoNode* remNode = link->remNode;
-        sprintf(line+offset, "--%s->%s/%lX", topoLinkTypeStr[link->type], topoNodeTypeStr[remNode->type], remNode->id);
+        sprintf(line+offset, "--%s->%s/%llX", topoLinkTypeStr[link->type], topoNodeTypeStr[remNode->type], remNode->id);
         offset = strlen(line);
       }
       INFO(NCCL_GRAPH, "%s (%d)", line, node->paths[t][n].width);

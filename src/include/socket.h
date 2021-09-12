@@ -376,9 +376,9 @@ static ncclResult_t connectAddress(int* fd, union socketAddress* remoteAddr) {
     SYSCHECK(setsockopt(*fd, SOL_SOCKET, SO_RCVBUF, (char*)&bufsize, sizeof(int)), "setsockopt");*/
 
   char line[1024];
-#ifdef ENABLE_TRACE
+// #ifdef ENABLE_TRACE
   TRACE(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
-#endif
+// #endif
 
   int ret;
   int timedout_retries = 0;

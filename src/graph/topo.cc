@@ -370,7 +370,7 @@ uint64_t getIbGuid(char* path) {
   FILE *file = fopen(guidPath, "r");
   if (file != NULL) {
     uint64_t a, b, c, d;
-    if (fscanf(file, "%04lx:%04lx:%04lx:%04lx", &a, &b, &c, &d) != EOF) {
+    if (fscanf(file, "%04llx:%04llx:%04llx:%04llx", &a, &b, &c, &d) != EOF) {
       guid = (a << 48) + (b << 32) + (c<<16) + d;
       TRACE(NCCL_GRAPH, "Opened %s guid %lx", guidPath, guid);
     }
@@ -491,9 +491,9 @@ ncclResult_t ncclTopoConnectPCI(struct ncclTopoSystem* system) {
 
 static ncclResult_t ncclTopoPrintRec(struct ncclTopoNode* node, struct ncclTopoNode* prevNode, char* line, int offset) {
   if (node->type == GPU) {
-    sprintf(line+offset, "%s/%lX (%d)", topoNodeTypeStr[node->type], node->id, node->rank);
+    sprintf(line+offset, "%s/%llX (%d)", topoNodeTypeStr[node->type], node->id, node->rank);
   } else {
-    sprintf(line+offset, "%s/%lX", topoNodeTypeStr[node->type], node->id);
+    sprintf(line+offset, "%s/%llX", topoNodeTypeStr[node->type], node->id);
   }
   INFO(NCCL_GRAPH, "%s", line);
   for (int i=0; i<offset; i++) line[i] = ' ';
@@ -508,9 +508,9 @@ static ncclResult_t ncclTopoPrintRec(struct ncclTopoNode* node, struct ncclTopoN
         NCCLCHECK(ncclTopoPrintRec(link->remNode, node, line, nextOffset));
       } else {
         if (link->remNode->type == NET) {
-          sprintf(line+nextOffset, "%s/%lX (%d)", topoNodeTypeStr[link->remNode->type], link->remNode->id, link->remNode->rank);
+          sprintf(line+nextOffset, "%s/%llX (%d)", topoNodeTypeStr[link->remNode->type], link->remNode->id, link->remNode->rank);
         } else {
-          sprintf(line+nextOffset, "%s/%lX", topoNodeTypeStr[link->remNode->type], link->remNode->id);
+          sprintf(line+nextOffset, "%s/%llX", topoNodeTypeStr[link->remNode->type], link->remNode->id);
         }
         INFO(NCCL_GRAPH, "%s", line);
       }
