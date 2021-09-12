@@ -92,10 +92,6 @@ int sched_setaffinity(pthread_t thread, size_t cpu_size,
 #define STR2(v) #v
 #define STR(v) STR2(v)
 
-#ifdef ENABLE_TRACE
-std::chrono::high_resolution_clock::time_point ncclEpoch;
-#endif
-
 #if CUDART_VERSION >= 9020
 #define NCCL_GROUP_CUDA_STREAM 0 // CGMD: CUDA 9.2,10.X Don't need to use an internal CUDA stream
 #else

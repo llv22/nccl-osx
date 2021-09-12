@@ -10,6 +10,16 @@
         "atomic": "cpp",
         "__locale": "cpp",
         "functional": "cpp",
-        "ios": "cpp"
+        "ios": "cpp",
+        "complex": "cpp",
+        "valarray": "cpp",
+        "cmath": "cpp",
+        "list": "cpp",
+        "new": "cpp",
+        "map": "cpp",
+        "vector": "cpp",
+        "locale": "cpp",
+        "iosfwd": "cpp",
+        "sstream": "cpp"
     }
 }

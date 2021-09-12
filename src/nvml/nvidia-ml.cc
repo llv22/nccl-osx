@@ -6,8 +6,13 @@
  * parts of nccl on macOS still adheres to Nvidia's declared license information illustrated
  * in LICENSE.txt
  *****************************************************************************************/
+#ifndef NVIDIA_ML_H_
+#define NVIDIA_ML_H_
 
 #include "nvml.h"
+#include "nccl.h"
+#include "core.h"
+
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -16,6 +21,23 @@
 #include <poll.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+struct nvmlDevice_st
+{
+    cudaDeviceProp* prop; //!< cudaDevice properties
+    int gpuIndex;         //!< The gpu index of CUDA
+    int driverVer;        //!< The driver version of CUDA
+    int runtimeVer;       //!< The runtime version of CUDA
+};
+
+/** Number of devices detected at component_init time */
+static int device_count = 0;
+/** NVML devices detected at component_init time, refer to https://medium.com/devoops-and-universe/monitoring-nvidia-gpus-cd174bf89311 */
+static vector<nvmlDevice_t> devices;
 
 // Symbolic name for visibility("default") attribute.
 #define EXPORT __attribute__((visibility("default")))
@@ -118,10 +140,46 @@ const char* nvmlErrorString(nvmlReturn_t result) {
  * Mandatory to load && Used in implementation init.cc Line796
  * Exported function 1: nvmlInit_v2, nccl internal symbol: wrapNvmlInit
  * This API will be remapped to nvmlInit in nvml.h.
+ * Implementation refers to https://searchcode.com/codesearch/view/43324646/, which is implementation of papi.c devices management by uci/utk.edu
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlInit(void) {
+    int cnt;
+    int driverVer;
+    int runtimeVer;
 
+    cudaSetDeviceFlags(cudaDeviceMapHost | cudaDeviceScheduleBlockingSync);
+
+    cudaError_t cures = cudaGetDeviceCount(&cnt);
+    if (cures){
+        WARN("can't retrieve gpu device number, failed to successfully load driver");
+        return NVML_ERROR_UNINITIALIZED;
+    }
+    cudaDriverGetVersion(&driverVer);
+    cudaRuntimeGetVersion(&runtimeVer);
+    for(int i = 0; i < cnt; i++) {
+        struct cudaDeviceProp* _prop = new cudaDeviceProp;
+        cudaError_t _cures = cudaGetDeviceProperties(_prop, i);
+        if (cures) {
+            INFO(NCCL_INIT, "gpu %d device can't be loaded successfully, skip", i);
+        }
+        else {
+            //see: initialization of device and put into NVML list
+            nvmlDevice_t devicePtr = new nvmlDevice_st;
+            devicePtr->driverVer = driverVer;
+            devicePtr->runtimeVer = runtimeVer;
+            devicePtr->prop = _prop;
+            devicePtr->gpuIndex = i;
+            devices.push_back(devicePtr);
+            device_count++;
+        }
+    }
+    return NVML_SUCCESS;
+}
+
+void destory(nvmlDevice_t &device)
+{
+    delete(device);
 }
 
 /**
@@ -130,17 +188,34 @@ nvmlReturn_t nvmlInit(void) {
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlShutdown(void) {
-
+    if (devices.size() > 0)
+    {
+        for_each(devices.begin(), devices.end(), destory);
+    }
+    
+    device_count = 0;
+    return NVML_SUCCESS;
 }
 
 /**
  * Mandatory to load && Used in implementation topo.cc Line574
  * Exported function 3: nvmlDeviceGetHandleByPciBusId_v2, nccl internal symbol: wrapNvmlDeviceGetHandleByPciBusId
  * This API will be remapped to nvmlDeviceGetHandleByPciBusId in nvml.h.
+ * pciBusId: domain:bus:device PCI identifier, please refer to https://developer.download.nvidia.com/compute/DevZone/NVML/doxygen/structnvml_pci_info__t.html for how to construct busId
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlDeviceGetHandleByPciBusId(const char *pciBusId, nvmlDevice_t *device) {
-
+    nvmlReturn_t status = NVML_ERROR_NOT_FOUND;
+    for(int i = 0; i < devices.size(); i++) {
+        cudaDeviceProp* _cudaProp = devices[i]->prop;
+        char _localBusId[16];
+        snprintf(_localBusId, sizeof(_localBusId), "%04x:%02x:%02x.%x", _cudaProp->pciDomainID, _cudaProp->pciBusID, _cudaProp->pciDeviceID, 0);
+        if(strcmp(pciBusId, _localBusId)) {
+            device = &(devices[i]);
+            status = NVML_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /**
@@ -149,7 +224,6 @@ nvmlReturn_t nvmlDeviceGetHandleByPciBusId(const char *pciBusId, nvmlDevice_t *d
  */
 EXPORT                        // Symbol to export 
 nvmlReturn_t nvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive) {
-
 
 }
 
@@ -219,3 +293,5 @@ EXPORT                        // Symbol to export
 nvmlReturn_t nvmlDeviceGetPciInfo(nvmlDevice_t device, nvmlPciInfo_t *pci) {
     return NVML_ERROR_NOT_SUPPORTED;
 }
+
+#endif

@@ -16,3 +16,9 @@ nvcc -o nvlik nvlik.cu -I/usr/local/cuda/include -lcudart -L/usr/local/cuda/lib
 ## 2, test case 2: load symbol
 
 refer to loadsym.cc, src/symbol.exports and src/nvml/nvidia-ml.cc
+
+## 3, test case 3: load device
+
+```bash
+nvcc -o culs culs.cu -I/usr/local/cuda/include -I../src/include -lcudart -L/usr/local/cuda/lib
+```
