@@ -105,6 +105,7 @@ static ncclResult_t bootstrapNetAccept(void* listenComm, void** recvComm) {
   struct sockaddr_in sockaddr;
   socklen_t socklen = sizeof(struct sockaddr_in);
   SYSCHECKVAL(accept(lComm->fd, (struct sockaddr*)&sockaddr, &socklen), "accept", rComm->fd);
+  INFO(NCCL_ALL, "accept %s:%d", sockaddr.sin_zero, sockaddr.sin_port);
   *recvComm = rComm;
   return ncclSuccess;
 }
@@ -210,7 +211,8 @@ static void *bootstrapRoot(void* listenComm) {
     ++c;
     TRACE(NCCL_INIT, "Received connect from rank %d total %d/%d",  info.rank, c, nranks);
   } while (c < nranks);
-  TRACE(NCCL_INIT, "COLLECTED ALL %d HANDLES", nranks);
+  // TRACE(NCCL_INIT, "COLLECTED ALL %d HANDLES", nranks);
+  INFO(NCCL_INIT, "COLLECTED ALL %d HANDLES", nranks);
 
   // Send the connect handle for the next rank in the AllGather ring
   for (int r=0; r<nranks; ++r) {

@@ -324,9 +324,12 @@ static ncclResult_t fillInfo(struct ncclComm* comm, struct ncclPeerInfo* info, u
   // Get the device MAJOR:MINOR of /dev/shm so we can use that
   // information to decide whether we can use SHM for inter-process
   // communication in a container environment
+
+  #if not defined(__APPLE) && not defined(__MACH__)
   struct stat statbuf;
   SYSCHECK(stat("/dev/shm", &statbuf), "stat");
   info->shmDev = statbuf.st_dev;
+  #endif
 
   info->busId = comm->busId;
   int netDevs;
@@ -533,6 +536,7 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, ncclUniqueId* comm
   // AllGather1 data is used again below
   // AllGather1 - end
 
+  INFO(NCCL_ALL, "begin to construct GPU topo system");
   // Topo detection / System graph creation
   NCCLCHECK(ncclTopoGetSystem(comm, &comm->topo));
   // Compute paths between GPUs and NICs
@@ -545,6 +549,7 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, ncclUniqueId* comm
   NCCLCHECK(ncclTopoGetMaxSpeed(comm->topo));
   // Print final topology
   NCCLCHECK(ncclTopoPrint(comm->topo));
+  // INFO(NCCL_ALL, "finish to construct GPU topo system");
 
   // Get rings and trees
   struct ncclTopoGraph treeGraph;
@@ -800,6 +805,7 @@ ncclResult_t ncclCommInitRankSync(ncclComm_t* newcomm, int nranks, ncclUniqueId 
   ncclResult_t res;
 
   NCCLCHECKGOTO(commAlloc(newcomm, nranks, myrank), res, cleanup);
+  //see: initialize transportRnk failed on macOS
   NCCLCHECKGOTO(initTransportsRank(*newcomm, &commId), res, cleanup);
   NCCLCHECKGOTO(devCommSetup(*newcomm), res, cleanup);
 

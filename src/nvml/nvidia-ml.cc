@@ -256,7 +256,8 @@ EXPORT // Symbol to export
         snprintf(_localBusId, NVML_DEVICE_PCI_BUS_ID_BUFFER_SIZE, "%04x:%02x:%02x.%x", _cudaProp->pciDomainID, _cudaProp->pciBusID, _cudaProp->pciDeviceID, 0);
         if (strcmp(pciBusId, _localBusId))
         {
-            device = &(devices[i]);
+            *device = devices[i];
+            // INFO(NCCL_ALL, "return device %p with busId %s for gpu[%d]", *device, _localBusId, i);
             status = NVML_SUCCESS;
         }
     }
@@ -399,11 +400,13 @@ EXPORT // Symbol to export
         return NVML_ERROR_NOT_SUPPORTED;
     }
     int value = 0;
-    cudaError_t result = checkCudaErrors(cudaDeviceGetP2PAttribute(&value, queryAttribute, realDevice->gpuIndex, link));
+    //see: for simplication purpose
+    // cudaError_t result = checkCudaErrors(cudaDeviceGetP2PAttribute(&value, queryAttribute, realDevice->gpuIndex, link));
+    cudaError_t result = cudaDeviceGetP2PAttribute(&value, queryAttribute, realDevice->gpuIndex, link);
+    *capResult = value;
     if (result != cudaSuccess) {
         return NVML_ERROR_NOT_SUPPORTED;
     }
-    *capResult = value;
     return NVML_SUCCESS;
 }
 

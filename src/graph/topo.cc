@@ -12,6 +12,9 @@
 #include "net.h"
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sstream>
+
+using namespace std;
 
 #define BUSID_SIZE (sizeof("0000:00:00.0"))
 #define BUSID_REDUCED_SIZE (sizeof("0000:00"))
@@ -40,15 +43,27 @@ static int getNumaId(char *path) {
 
 static ncclResult_t getPciPath(char* busId, char** path) {
   for (int i=0; i<BUSID_SIZE; i++) busId[i] = tolower(busId[i]);
-  char busPath[] = "/sys/class/pci_bus/0000:00/../../0000:00:00.0";
-  memcpy(busPath+sizeof("/sys/class/pci_bus/")-1, busId, BUSID_REDUCED_SIZE-1);
-  memcpy(busPath+sizeof("/sys/class/pci_bus/0000:00/../../")-1, busId, BUSID_SIZE-1);
-  *path = realpath(busPath, NULL);
-  if (*path == NULL) {
-    WARN("Could not find real path of %s", busPath);
-    return ncclSystemError;
-  }
-  return ncclSuccess;
+  #if defined(__APPLE__) && defined(__MACH__)
+    char busPath[] = "/sys/class/pci_bus/0000:00/../../0000:00:00.0";
+    memset(busPath+sizeof("/sys/class/")-1, 0, BUSID_SIZE);
+    memcpy(busPath+sizeof("/sys/class/")-1, busId, BUSID_SIZE-1);
+    int len = sizeof(busPath);
+    char* _path = (char*)malloc(len * sizeof(char));
+    memcpy(_path, busPath, len);
+    *path = _path;
+    return ncclSuccess;
+  #else
+    char busPath[] = "/sys/class/pci_bus/0000:00/../../0000:00:00.0";
+    // memcpy(busPath+sizeof("/sys/class/pci_bus/")-1, busId, BUSID_REDUCED_SIZE-1);
+    // memcpy(busPath+sizeof("/sys/class/pci_bus/0000:00/../../")-1, busId, BUSID_SIZE-1);
+    memcpy(busPath+sizeof("/sys/class/pci_bus/0000:00/../../")-1, busId, BUSID_SIZE-1);
+    *path = realpath(busPath, NULL);
+    if (*path == NULL) {
+      WARN("Could not find real path of %s", busPath);
+      return ncclSystemError;
+    }
+    return ncclSuccess;
+  #endif
 }
 
 // Get an int64 from a PCI path. For example, sys/class/pci0000:00/0000:00:02.0/0000:02:00.0/ will return 0x000002000.
@@ -226,6 +241,7 @@ ncclResult_t ncclTopoConnectNVLink(nvmlDevice_t* nvmlDevs, struct ncclTopoSystem
   for (int g=0; g<system->nodes[GPU].count; g++) {
     struct ncclTopoNode* gpu = system->nodes[GPU].nodes+g;
     int cudaMajor, cudaMinor;
+    // printf("wrapNvmlDeviceGetCudaComputeCapability for gpu %d, nvmlDevs[g]=%p\n", g, nvmlDevs[g]);
     NCCLCHECK(wrapNvmlDeviceGetCudaComputeCapability(nvmlDevs[g], &cudaMajor, &cudaMinor));
     int maxNvLinks, width;
     if (cudaMajor < 6) {
@@ -299,11 +315,13 @@ ncclResult_t ncclTopoConnectNVLink(nvmlDevice_t* nvmlDevs, struct ncclTopoSystem
     }
     minNvlinks = std::min(minNvlinks, nvlinks);
     minWidth = std::min(minWidth, width);
+    // printf("gpu %d minNvlinks=%d, minWidth=%d\n", g, minNvlinks, minWidth);
   }
   int pciWidth;
   NCCLCHECK(ncclTopoGetPciWidth(&pciWidth));
   system->maxSpeed = minNvlinks ? minNvlinks*minWidth : pciWidth;
   system->maxWidth = minNvlinks ? minWidth : pciWidth;
+  // printf("system->maxSpeed=%d, system->maxWidth=%d\n", system->maxSpeed, system->maxWidth);
   return ncclSuccess;
 }
 

@@ -370,6 +370,7 @@ static ncclResult_t connectAddress(int* fd, union socketAddress* remoteAddr) {
 
   const int one = 1;
   SYSCHECK(setsockopt(*fd, IPPROTO_TCP, TCP_NODELAY, (char*)&one, sizeof(int)), "setsockopt");
+  // SYSCHECK(setsockopt(*fd, SOL_SOCKET, SO_REUSEADDR , (char*)&one, sizeof(int)), "setsockopt");
 
   /*  const int bufsize = 128*1024;
     SYSCHECK(setsockopt(*fd, SOL_SOCKET, SO_SNDBUF, (char*)&bufsize, sizeof(int)), "setsockopt");
@@ -377,7 +378,8 @@ static ncclResult_t connectAddress(int* fd, union socketAddress* remoteAddr) {
 
   char line[1024];
 // #ifdef ENABLE_TRACE
-  TRACE(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
+  INFO(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
+  // TRACE(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
 // #endif
 
   int ret;

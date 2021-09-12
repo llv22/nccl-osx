@@ -21,6 +21,8 @@
         "locale": "cpp",
         "iosfwd": "cpp",
         "sstream": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "chrono": "cpp",
+        "istream": "cpp"
     }
 }

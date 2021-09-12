@@ -62,11 +62,17 @@ ncclResult_t ncclSocketDevices(int* ndev) {
 ncclResult_t ncclSocketPciPath(int dev, char** path) {
   char devicepath[PATH_MAX];
   snprintf(devicepath, PATH_MAX, "/sys/class/net/%s/device", ncclNetIfNames+dev*MAX_IF_NAME_SIZE);
+#if defined(__APPLE__) && defined(__MACH__)
+  char* _path = (char*)malloc(PATH_MAX * sizeof(char));
+  memcpy(_path, devicepath, PATH_MAX);
+  *path = _path;
+#else
   *path = realpath(devicepath, NULL);
   if (*path == NULL) {
     INFO(NCCL_NET|NCCL_INIT, "Could not find real path of %s", devicepath);
     return ncclSystemError;
   }
+#endif
   return ncclSuccess;
 }
 

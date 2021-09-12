@@ -70,9 +70,11 @@ ncclResult_t shmSendSetup(struct ncclTopoSystem* topo, struct ncclTopoGraph* gra
   info.recvRank = peerInfo->rank;
 
   char shmName[MAX_SHM_NAME_LEN];
-  sprintf(shmName, "nccl-shm-send-%llx-%d-%d-%d", info.pidHash, info.id, info.sendRank, info.recvRank);
+  //see: https://stackoverflow.com/questions/38049068/osx-shm-open-returns-enametoolong, only allows 32 on macOS
+  sprintf(shmName, "sh-send-%llx-%d-%d-%d", info.pidHash, info.id, info.sendRank, info.recvRank);
   info.shmSize = resources->shmSize = sizeof(struct ncclSendMem);
-  TRACE(NCCL_SHM,"Open shmName %s shmSize %d", shmName, info.shmSize);
+  // TRACE(NCCL_SHM,"Open shmName %s shmSize %d", shmName, info.shmSize);
+  INFO(NCCL_ALL,"Open shmName %s shmSize %d", shmName, info.shmSize);
   NCCLCHECK(shmOpen(shmName, resources->shmSize, (void**)&resources->hostMem, (void**)&resources->devHostMem, 1));
 
   INFO(NCCL_INIT|NCCL_SHM,"Ring %02d : %d[%lx] -> %d[%lx] via direct shared memory", channelId, myInfo->rank, myInfo->busId, peerInfo->rank, peerInfo->busId);
@@ -93,7 +95,8 @@ ncclResult_t shmRecvSetup(struct ncclTopoSystem* topo, struct ncclTopoGraph* gra
   info.recvRank = myInfo->rank;
 
   char shmName[MAX_SHM_NAME_LEN];
-  sprintf(shmName, "nccl-shm-recv-%llx-%d-%d-%d", info.pidHash, info.id, info.sendRank, info.recvRank);
+  //see: https://stackoverflow.com/questions/38049068/osx-shm-open-returns-enametoolong, only allows 32 on macOS
+  sprintf(shmName, "sh-recv-%llx-%d-%d-%d", info.pidHash, info.id, info.sendRank, info.recvRank);
   info.shmSize = resources->shmSize = offsetof(struct ncclRecvMem, buff)+buffSize;
   TRACE(NCCL_SHM,"Open shmName %s shmSize %d", shmName, info.shmSize);
   NCCLCHECK(shmOpen(shmName, resources->shmSize, (void**)&resources->hostMem, (void**)&resources->devHostMem, 1));
@@ -110,7 +113,8 @@ ncclResult_t shmSendConnect(struct ncclConnect* connectInfo, struct ncclConnecto
   struct shmSendResources* resources = (struct shmSendResources*)send->transportResources;
 
   char shmName[MAX_SHM_NAME_LEN];
-  sprintf(shmName, "nccl-shm-recv-%llx-%d-%d-%d", info->pidHash, info->id, info->sendRank, info->recvRank);
+  //see: https://stackoverflow.com/questions/38049068/osx-shm-open-returns-enametoolong, only allows 32 on macOS
+  sprintf(shmName, "sh-recv-%llx-%d-%d-%d", info->pidHash, info->id, info->sendRank, info->recvRank);
   resources->remShmSize = info->shmSize;
   TRACE(NCCL_SHM,"Open shmName %s shmSize %d", shmName, info->shmSize);
   NCCLCHECK(shmOpen(shmName, resources->remShmSize, (void**)&resources->remHostMem, (void**)&resources->devRemHostMem, 0));
@@ -135,7 +139,8 @@ ncclResult_t shmRecvConnect(struct ncclConnect* connectInfo, struct ncclConnecto
   struct shmConnectInfo* info = (struct shmConnectInfo*)connectInfo;
 
   char shmName[MAX_SHM_NAME_LEN];
-  sprintf(shmName, "nccl-shm-send-%llx-%d-%d-%d", info->pidHash, info->id, info->sendRank, info->recvRank);
+  //see: https://stackoverflow.com/questions/38049068/osx-shm-open-returns-enametoolong, only allows 32 on macOS
+  sprintf(shmName, "sh-send-%llx-%d-%d-%d", info->pidHash, info->id, info->sendRank, info->recvRank);
   resources->remShmSize = info->shmSize;
   TRACE(NCCL_SHM,"Open shmName %s shmSize %d", shmName, info->shmSize);
   NCCLCHECK(shmOpen(shmName, resources->remShmSize, (void**)&resources->remHostMem, (void**)&resources->devRemHostMem, 0));
