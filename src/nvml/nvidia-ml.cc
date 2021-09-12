@@ -21,7 +21,8 @@
 #define EXPORT __attribute__((visibility("default")))
 
 /**
- * Mandatoary exported function 0: nvmlErrorString.
+ * Mandatory to load && Used in implementation init.cc Line795, only have to load libnvidia-ml.so.1, not blocker
+ * Exported function 0: nvmlErrorString.
  */ 
 EXPORT                        // Symbol to export
 const char* nvmlErrorString(nvmlReturn_t result) {
@@ -114,7 +115,8 @@ const char* nvmlErrorString(nvmlReturn_t result) {
 }
 
 /**
- * Mandatoary exported function 1: nvmlInit_v2.
+ * Mandatory to load && Used in implementation init.cc Line796
+ * Exported function 1: nvmlInit_v2, nccl internal symbol: wrapNvmlInit
  * This API will be remapped to nvmlInit in nvml.h.
  */
 EXPORT                        // Symbol to export
@@ -123,7 +125,8 @@ nvmlReturn_t nvmlInit(void) {
 }
 
 /**
- * Mandatoary exported function 2: nvmlShutdown.
+ * Mandatory to load && Used in implementation init.cc Line808
+ * Exported function 2: nvmlShutdown, nccl internal symbol: wrapNvmlShutdown
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlShutdown(void) {
@@ -131,7 +134,8 @@ nvmlReturn_t nvmlShutdown(void) {
 }
 
 /**
- * Mandatoary exported function 3: nvmlDeviceGetHandleByPciBusId_v2.
+ * Mandatory to load && Used in implementation topo.cc Line574
+ * Exported function 3: nvmlDeviceGetHandleByPciBusId_v2, nccl internal symbol: wrapNvmlDeviceGetHandleByPciBusId
  * This API will be remapped to nvmlDeviceGetHandleByPciBusId in nvml.h.
  */
 EXPORT                        // Symbol to export
@@ -140,7 +144,8 @@ nvmlReturn_t nvmlDeviceGetHandleByPciBusId(const char *pciBusId, nvmlDevice_t *d
 }
 
 /**
- * Mandatoary exported function 4: nvmlDeviceGetNvLinkState.
+ * Optional to load && Used in implementation topo.cc Line250
+ * Exported function 4: nvmlDeviceGetNvLinkState, nccl internal symbol: wrapNvmlDeviceGetNvLinkState
  */
 EXPORT                        // Symbol to export 
 nvmlReturn_t nvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive) {
@@ -149,7 +154,8 @@ nvmlReturn_t nvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nv
 }
 
 /**
- * Mandatoary exported function 5: nvmlDeviceGetNvLinkRemotePciInfo_v2.
+ * Optional to load && Used in implementation topo.cc Line254
+ * Exported function 5: nvmlDeviceGetNvLinkRemotePciInfo_v2, nccl internal symbol: wrapNvmlDeviceGetNvLinkRemotePciInfo
  * This API will be remapped to nvmlDeviceGetNvLinkRemotePciInfo in nvml.h.
  */
 EXPORT                        // Symbol to export
@@ -158,7 +164,8 @@ nvmlReturn_t nvmlDeviceGetNvLinkRemotePciInfo(nvmlDevice_t device, unsigned int 
 }
 
 /**
- * Mandatoary exported function 6: nvmlDeviceGetNvLinkCapability.
+ * Optional to load && Used in implementation topo.cc Line246
+ * Exported function 6: nvmlDeviceGetNvLinkCapability, nccl internal symbol: wrapNvmlDeviceGetNvLinkCapability
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlDeviceGetNvLinkCapability(nvmlDevice_t device, unsigned int link,
@@ -167,7 +174,8 @@ nvmlReturn_t nvmlDeviceGetNvLinkCapability(nvmlDevice_t device, unsigned int lin
 }
 
 /**
- * Mandatoary exported function 7: nvmlDeviceGetCudaComputeCapability.
+ * Mandatory to load && Used in implementation topo.cc Line229
+ * Exported function 7: nvmlDeviceGetCudaComputeCapability, nccl internal symbol: wrapNvmlDeviceGetCudaComputeCapability
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlDeviceGetCudaComputeCapability(nvmlDevice_t device, int *major, int *minor) {
@@ -175,7 +183,8 @@ nvmlReturn_t nvmlDeviceGetCudaComputeCapability(nvmlDevice_t device, int *major,
 }
 
 /**
- * Optional exported function 8: nvmlDeviceGetMinorNumber.
+ * Mandatory to load && Not Used in implementation
+ * Exported function 8: nvmlDeviceGetMinorNumber, nccl internal symbol: wrapNvmlDeviceGetMinorNumber
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int *minorNumber) {
@@ -183,7 +192,8 @@ nvmlReturn_t nvmlDeviceGetMinorNumber(nvmlDevice_t device, unsigned int *minorNu
 }
 
 /**
- * Optional exported function 9: nvmlDeviceGetIndex.
+ * Mandatory to load && Not Used in implementation
+ * Exported function 9: nvmlDeviceGetIndex, nccl internal symbol: wrapNvmlDeviceGetIndex
  */
 EXPORT                        // Symbol to export
 nvmlReturn_t nvmlDeviceGetIndex(nvmlDevice_t device, unsigned int *index) {
@@ -191,7 +201,8 @@ nvmlReturn_t nvmlDeviceGetIndex(nvmlDevice_t device, unsigned int *index) {
 }
 
 /**
- * Optional exported function 10: nvmlDeviceGetHandleByIndex_v2.
+ * Mandatory to load && Not Used in implementation
+ * Exported function 10: nvmlDeviceGetHandleByIndex_v2, nccl internal symbol: wrapNvmlDeviceGetHandleByIndex
  * This API will be remapped to nvmlDeviceGetHandleByIndex in nvml.h.
  */
 EXPORT                        // Symbol to export
@@ -200,7 +211,8 @@ nvmlReturn_t nvmlDeviceGetHandleByIndex(unsigned int index, nvmlDevice_t *device
 }
 
 /**
- * Optional exported function 11: nvmlDeviceGetPciInfo_v3.
+ * Mandatory to load && Not Used in implementation
+ * Exported function 11: nvmlDeviceGetPciInfo_v3, nccl internal symbol: wrapNvmlDeviceGetPciInfo
  * This API will be remapped to nvmlDeviceGetPciInfo in nvml.h.
  */
 EXPORT                        // Symbol to export
