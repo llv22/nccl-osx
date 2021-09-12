@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 ///// for mac os x
 #include <unistd.h>
@@ -45,6 +46,7 @@ static int shm_map(int fd, const int shmsize, void** ptr) {
 static ncclResult_t shmSetup(const char* shmname, const int shmsize, int* fd, void** ptr, int create) {
   SYSCHECKVAL(shm_open(shmname, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR), "shm_open", *fd);
   if (create) SYSCHECK(shm_allocate(*fd, shmsize), "posix_fallocate");
+  printf("fd=%d, shmsize=%d, ptr=%p\n", *fd, shmsize, ptr);
   SYSCHECK(shm_map(*fd, shmsize, ptr), "mmap");
   close(*fd);
   *fd = -1;
