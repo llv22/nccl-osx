@@ -17,7 +17,21 @@
 #include <string.h>
 #include "nccl_net.h"
 
-#define gettid() (pid_t) syscall(SYS_gettid)
+//see: https://github.com/google/glog/issues/185
+#if defined(__APPLE__) && defined(__MACH__)
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+#include <pthread.h>
+__inline__ pid_t gettid() {
+  uint64_t tid64;
+  pthread_threadid_np(NULL, &tid64);
+  return (pid_t)tid64;
+}
+#else
+#define _gettid() (pid_t) syscall(__NR_gettid)
+#endif
+#else
+#define _gettid() (pid_t) syscall(SYS_gettid)
+#endif
 
 extern int ncclDebugLevel;
 extern uint64_t ncclDebugMask;

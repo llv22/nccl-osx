@@ -15,18 +15,28 @@
 
 ///// for mac os x
 #include <unistd.h>
+#include <cmath>
 #include <sys/types.h>
 bool posix_fallocate(int fd, const int aLength) 
 {
   fstore_t store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, aLength};
-  // Try to get a continous chunk of disk space
+  // Try to get a continuous chunk of disk space
   int ret = fcntl(fd, F_PREALLOCATE, &store);
     if(-1 == ret){
     // OK, perhaps we are too fragmented, allocate non-continuous
     store.fst_flags = F_ALLOCATEALL;
     ret = fcntl(fd, F_PREALLOCATE, &store);
-    if (-1 == ret)
+    if (-1 == ret) {
+#if defined(__APPLE__) && defined(__MACH__)
+      //on macOS, we need to ftruncate, otherwise fd can't be allocated
+      struct stat mapstat;
+      if (-1 != fstat(fd, &mapstat) && mapstat.st_size == 0)
+      {
+        return 0 == ftruncate(fd, aLength);
+      }
+#endif
       return false;
+    }
   }
   return 0 == ftruncate(fd, aLength);
 }
@@ -43,10 +53,12 @@ static int shm_map(int fd, const int shmsize, void** ptr) {
   return (*ptr == MAP_FAILED) ? -1 : 0;
 }
 
-static ncclResult_t shmSetup(const char* shmname, const int shmsize, int* fd, void** ptr, int create) {
+static ncclResult_t shmSetup(const char* shmname, const int _shmsize, int* fd, void** ptr, int create) {
+  //see: roundup with pagesize
+  const int pagesize = getpagesize();
+  const int shmsize = ((int)ceil((double)_shmsize / (double)pagesize)) * pagesize;
   SYSCHECKVAL(shm_open(shmname, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR), "shm_open", *fd);
   if (create) SYSCHECK(shm_allocate(*fd, shmsize), "posix_fallocate");
-  printf("fd=%d, shmsize=%d, ptr=%p\n", *fd, shmsize, ptr);
   SYSCHECK(shm_map(*fd, shmsize, ptr), "mmap");
   close(*fd);
   *fd = -1;
