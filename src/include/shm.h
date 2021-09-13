@@ -42,11 +42,21 @@ bool posix_fallocate(int fd, const int aLength)
 }
 ////
 
-// Change functions behavior to match other SYS functions
+// Change functions behavior to match other SYS functions, here. bugs in original logic. For conservative strage using macro.
 static int shm_allocate(int fd, const int shmsize) {
+#if defined(__APPLE__) && defined(__MACH__)
+  bool succeed = posix_fallocate(fd, shmsize);
+  if (!succeed)
+  {
+    errno = succeed;
+    return -1;
+  }
+  return 0;
+#else
   int err = posix_fallocate(fd, shmsize);
   if (err) { errno = err; return -1; }
   return 0;
+#endif
 }
 static int shm_map(int fd, const int shmsize, void** ptr) {
   *ptr = mmap(NULL, shmsize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
