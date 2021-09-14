@@ -1,4 +1,4 @@
-# NCCL-OSX
+# NCCL on macOS with stub libraries
 
 Optimized primitives for collective multi-GPU communication migrated to Mac OS X (10.13 - 10.13.6).
 
@@ -7,7 +7,8 @@ Optimized primitives for collective multi-GPU communication migrated to Mac OS X
 Why do we need NCCL on Mac OS X?  
 
 * Because when using [pytorch-osx-build](http://github.com/TomHeaven/pytorch-osx-build), [Tom](https://github.com/TomHeaven) found some objection detection frameworks use distributed GPU training, which requires at least one distributed GPU backend functional. GPU backends of Pytorch consists of NCCL and GLOO. GLOO is dependent of NCCL. Thus, we need NCCL.
-With the NCCL migration, GLOO can be compiled on Mac OS X and works fine as a distributed GPU backend of Pytorch. However, using of NCCL backend of Pytorch will fail at "unhandled system error" and I cannot figure out the cause.
+With the NCCL migration, GLOO can be compiled on Mac OS X and works fine as a distributed GPU backend of Pytorch. However, using of NCCL backend of Pytorch will fail at "unhandled system error" and I figured out the cause is many nccl codes heavily coupled with ubuntu system.
+That is why I was motivated to migrate nccl library fully support for macOS, because it's a very good opportunity to learn how topo system of GPU resources are managed by NCCL framework and also understand dependencies between CUDA and NCCL.
 
 * Another drive behind this project is supporting XLA in [JAX on macOS cuda](https://github.com/llv22/jax-macOS-cuda). One of the essential functionalities of JAX is to leverage XLA to bridge with NCCL under GPU. Currently Tom already finished one ported Tensorflow version in [tensorflow-osx-build](https://github.com/TomHeaven/tensorflow-osx-build) and the provided XLA in this module could greatly reduce my effort to enable XLA for JAX on macOS cuda. But I have to let XLA bridge on macOS cuda working through, which is another reason why I forked this repository for continuing with Tom's work.
 
@@ -327,4 +328,6 @@ make install PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/driver
 
 All source code and accompanying documentation is copyright (c) 2015-2019, NVIDIA CORPORATION. All rights reserved.
 
-Migration to Mac OS X is done by [Orlando](https://github.com/llv22) and [TomHeaven](https://github.com/TomHeaven/nccl-osx).
+Migration to Mac OS X is done by [Orlando](https://github.com/llv22).
+
+I sincerely appreciate the effort of [TomHeaven](https://github.com/TomHeaven/nccl-osx), but the implementations between Tom and I already diverged after 10-15 commits, especially when deciding to implement a simplified version of libnvidia-ml.dylib from scratch.
