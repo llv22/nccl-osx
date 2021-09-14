@@ -20,7 +20,7 @@ That is why I was motivated to migrate nccl library fully support for macOS, bec
 
 This migration is fully functional after Orlando's effort for adding functionalities required on macOS. The relevant works are mainly listed as follow:
 
-* construct libnvidia-smi.dylib and drafts basic functionalities. Fortunately, as my devices is GeoForce 1080 which can't support NVLink and Cuda exposes peer2peer API, I can manage to construct a simple wrapper library without including events monitor logic in NVML. One more clarification also raised up to Nvidia team, refer to <>.
+* construct libnvidia-smi.dylib and drafts basic functionalities. Fortunately, as my devices is GeoForce 1080 which can't support NVLink and Cuda exposes peer2peer API, I can manage to construct a simple wrapper library without including events monitor logic in NVML. One more clarification also raised up to Nvidia team, refer to <https://forums.developer.nvidia.com/t/how-to-use-cuda-api-to-implement-nvlink-query/189191>.
 * migrate thread synchronization and shared memory allocation on macOS
 * disable system check for /sys/dev check on macOS [in NCCL version > 2.5.7, the team has already started work to eliminate such dependency. I will follow-up later]
 
