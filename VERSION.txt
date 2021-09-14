@@ -1,0 +1,2 @@
+NCCL-macOS 2.5.7
+originated from NCCL official 2.5.7-1
