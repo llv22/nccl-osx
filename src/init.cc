@@ -78,11 +78,13 @@ int sched_setaffinity(pthread_t thread, size_t cpu_size,
   for (core = 0; core < 8 * cpu_size; core++) {
     if (CPU_ISSET(core, cpu_set)) break;
   }
-  printf("binding to core %d\n", core);
   thread_affinity_policy_data_t policy = { core };
   mach_thread = pthread_mach_thread_np(thread);
   thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY,
                     (thread_policy_t)&policy, 1);
+  uint64_t thread_id;
+  pthread_threadid_np(thread, &thread_id);
+  INFO(NCCL_INIT, "binding to core %d from thread %lu", core, thread_id);
   return 0;
 }
 
@@ -842,14 +844,16 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
     goto end;
   }
 
-  // INFO(NCCL_ALL, "ncclAsyncMode: %d, res: %d, parameters: newcomm=%p, nranks=%d, commId.internal=%.128s, myrank=%d, cudaDev=%d", ncclAsyncMode(), res, newcomm, nranks, commId.internal, myrank, cudaDev);
   if (ncclAsyncMode()) {
     NCCLCHECKGOTO(ncclAsyncInit(ncclCommInitRankSync, newcomm, nranks, commId, myrank, cudaDev), res, end);
   } else {
     NCCLCHECKGOTO(ncclCommInitRankSync(newcomm, nranks, commId, myrank, cudaDev), res, end);
   }
 end:
-  if (ncclAsyncMode()) return ncclAsyncErrCheck(res);
+  if (ncclAsyncMode()) {
+    INFO(NCCL_ALL, "finish - ncclAsyncMode of ncclAsyncErrCheck = %d", res);
+    return ncclAsyncErrCheck(res);
+  }
   else return res;
 }
 

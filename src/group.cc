@@ -9,10 +9,17 @@
 #include "enqueue.h"
 
 #define MAX_ASYNC_OPS 128
+#if defined(__APPLE__) && defined(__MACH__)
+__thread pthread_t ncclGroupThreads[MAX_ASYNC_OPS];
+__thread int ncclGroupIndex = 0;
+__thread int ncclGroupMode = 0;
+__thread ncclResult_t ncclGroupError = ncclSuccess;
+#else
 thread_local pthread_t ncclGroupThreads[MAX_ASYNC_OPS];
 thread_local int ncclGroupIndex = 0;
 thread_local int ncclGroupMode = 0;
 thread_local ncclResult_t ncclGroupError = ncclSuccess;
+#endif
 
 bool ncclAsyncMode() {
   return ncclGroupMode > 0;
@@ -82,6 +89,7 @@ ncclResult_t ncclAsyncInit(ncclInitFunc_t func, ncclComm_t* newcomm, int ndev, n
   args->init.cudaDev = cudaDev;
   args->init.newcomm = newcomm;
   args->init.ndev = ndev;
+  INFO(NCCL_ALL, "commId = %s", commId.internal);
   memcpy(&args->init.commId, &commId, sizeof(commId));
   args->init.myrank = myrank;
   return ncclSuccess;
@@ -128,6 +136,7 @@ ncclResult_t ncclGroupEnd() {
     if (args->funcType == ASYNC_FUNC_INIT) {
       pthread_create(ncclGroupThreads+i, NULL, ncclAsyncThreadMain, args);
     }
+    INFO(NCCL_ALL, "finish ncclGroupThreads[%d] creation, args->funcType=%d", i, args->funcType);
   }
 
   /* Collectives are done in three steps :
@@ -165,6 +174,7 @@ ncclResult_t ncclGroupEnd() {
     }
   }
 
+  INFO(NCCL_ALL, "wait %d threads to terminate", ncclGroupIndex);
   /* For init, since we use threads, we just wait for threads to complete */
   while (done) {
     for (int i=0; i<ncclGroupIndex; i++) {

@@ -23,6 +23,7 @@
         "sstream": "cpp",
         "string": "cpp",
         "chrono": "cpp",
-        "istream": "cpp"
+        "istream": "cpp",
+        "thread": "cpp"
     }
 }
