@@ -24,6 +24,7 @@
         "string": "cpp",
         "chrono": "cpp",
         "istream": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "utility": "cpp"
     }
 }

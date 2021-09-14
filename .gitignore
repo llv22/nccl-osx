@@ -5,3 +5,5 @@
 nccl-*/
 test/sharedmem
 test/sharedmem.dSYM/
+test/thread_coll
+test/thread_coll.dSYM/
