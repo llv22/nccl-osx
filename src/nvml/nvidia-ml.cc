@@ -218,6 +218,7 @@ EXPORT // Symbol to export
 
 __inline__ void destory(nvmlDevice_t &device)
 {
+    INFO(NCCL_ALL, "destory device = %p", device);
     delete (device);
 }
 
@@ -229,12 +230,11 @@ EXPORT // Symbol to export
     nvmlReturn_t
     nvmlShutdown(void)
 {
-    if (devices.size() > 0)
-    {
-        for_each(devices.begin(), devices.end(), destory);
-    }
-
-    device_count = 0;
+    // if (devices.size() > 0)
+    // {
+    //     for_each(devices.begin(), devices.end(), destory);
+    // }
+    // device_count = 0;
     return NVML_SUCCESS;
 }
 

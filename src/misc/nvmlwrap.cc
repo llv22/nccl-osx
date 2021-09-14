@@ -70,7 +70,6 @@ ncclResult_t wrapNvmlSymbols(void) {
     WARN("Failed to open libnvidia-ml.so.1");
     goto teardown;
   }
-  INFO(NCCL_ALL, "finish to dlopen(\"libnvidia-ml.so.1\", RTLD_NOW)");
 #define LOAD_SYM(handle, symbol, funcptr) do {         \
     cast = (void**)&funcptr;                             \
     tmp = dlsym(handle, symbol);                         \

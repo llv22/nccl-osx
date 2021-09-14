@@ -66,7 +66,8 @@ static int shm_map(int fd, const int shmsize, void** ptr) {
 static ncclResult_t shmSetup(const char* shmname, const int _shmsize, int* fd, void** ptr, int create) {
   //see: roundup with pagesize
   const int pagesize = getpagesize();
-  const int shmsize = ((int)ceil((double)_shmsize / (double)pagesize)) * pagesize;
+  const int shmsize = (int)(ceil((double)_shmsize / (double)pagesize) * pagesize);
+  INFO(NCCL_ALL, "round up for shmsize from %d to %d", _shmsize, shmsize);
   SYSCHECKVAL(shm_open(shmname, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR), "shm_open", *fd);
   if (create) SYSCHECK(shm_allocate(*fd, shmsize), "posix_fallocate");
   SYSCHECK(shm_map(*fd, shmsize, ptr), "mmap");

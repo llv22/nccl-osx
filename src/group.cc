@@ -73,6 +73,7 @@ thread_local struct ncclAsyncArgs ncclGroupArgs[MAX_ASYNC_OPS];
 
 void* ncclAsyncThreadMain(void* args_) {
   struct ncclAsyncArgs* args = (struct ncclAsyncArgs*)args_;
+  INFO(NCCL_INIT,"ncclAsyncThreadMain: thread id - %d, comm %p rank %d nranks %d cudaDev %d - begin to work", gettid(), args->init.newcomm, args->init.ndev, args->init.myrank, args->init.cudaDev);
   CHECK(args->init.func(args->init.newcomm, args->init.ndev, args->init.commId, args->init.myrank, args->init.cudaDev));
   return args;
 }
@@ -89,7 +90,6 @@ ncclResult_t ncclAsyncInit(ncclInitFunc_t func, ncclComm_t* newcomm, int ndev, n
   args->init.cudaDev = cudaDev;
   args->init.newcomm = newcomm;
   args->init.ndev = ndev;
-  INFO(NCCL_ALL, "commId = %s", commId.internal);
   memcpy(&args->init.commId, &commId, sizeof(commId));
   args->init.myrank = myrank;
   return ncclSuccess;
@@ -131,12 +131,15 @@ ncclResult_t ncclGroupEnd() {
   if (ret != ncclSuccess) goto group_cleanup;
 
   /* Launch async ncclCommInitRank */
+  // INFO(NCCL_INIT,"main thread to initialize subthread: main thread id - %d", gettid());
   for (int i=0; i<ncclGroupIndex; i++) {
     struct ncclAsyncArgs* args = ncclGroupArgs+i;
     if (args->funcType == ASYNC_FUNC_INIT) {
       pthread_create(ncclGroupThreads+i, NULL, ncclAsyncThreadMain, args);
+      uint64_t thread_id;
+      pthread_threadid_np(ncclGroupThreads[i], &thread_id);
+      INFO(NCCL_ALL, "to create ncclGroupThreads[%d] id = %d, p = %p to terminate", i, thread_id, ncclGroupThreads[i]);
     }
-    INFO(NCCL_ALL, "finish ncclGroupThreads[%d] creation, args->funcType=%d", i, args->funcType);
   }
 
   /* Collectives are done in three steps :
@@ -174,13 +177,16 @@ ncclResult_t ncclGroupEnd() {
     }
   }
 
-  INFO(NCCL_ALL, "wait %d threads to terminate", ncclGroupIndex);
+  // INFO(NCCL_ALL, "wait %d threads to terminate", ncclGroupIndex);
   /* For init, since we use threads, we just wait for threads to complete */
   while (done) {
     for (int i=0; i<ncclGroupIndex; i++) {
       struct ncclAsyncArgs* args = ncclGroupArgs+i;
       if (args->funcType == ASYNC_FUNC_INIT && doneArray[i] == 0) {
         //see: orlando replace pthread_tryjoin_np with pthread_join, as no compatible version on mac for the former
+        uint64_t thread_id;
+        pthread_threadid_np(ncclGroupThreads[i], &thread_id);
+        INFO(NCCL_ALL, "to wait ncclGroupThreads[%d] id = %d, p = %p to terminate", i, thread_id, ncclGroupThreads[i]);
         int err = pthread_join(ncclGroupThreads[i], NULL);
         if (err == EBUSY) continue;
         if (err != 0) {

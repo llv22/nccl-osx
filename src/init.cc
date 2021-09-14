@@ -814,7 +814,7 @@ ncclResult_t ncclCommInitRankSync(ncclComm_t* newcomm, int nranks, ncclUniqueId 
   sched_setaffinity(0, sizeof(cpu_set_t), &affinitySave);
   NCCLCHECKGOTO(wrapNvmlShutdown(), res, cleanup);
 
-  INFO(NCCL_INIT,"comm %p rank %d nranks %d cudaDev %d busId %x - Init COMPLETE", *newcomm, myrank, nranks, (*newcomm)->cudaDev, (*newcomm)->busId);
+  INFO(NCCL_INIT,"thread id - %d, comm %p rank %d nranks %d cudaDev %d busId %x - Init COMPLETE", gettid(), *newcomm, myrank, nranks, (*newcomm)->cudaDev, (*newcomm)->busId);
 
   return ncclSuccess;
 cleanup:
@@ -851,7 +851,6 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
   }
 end:
   if (ncclAsyncMode()) {
-    INFO(NCCL_ALL, "finish - ncclAsyncMode of ncclAsyncErrCheck = %d", res);
     return ncclAsyncErrCheck(res);
   }
   else return res;

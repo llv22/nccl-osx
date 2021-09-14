@@ -25,6 +25,10 @@
         "chrono": "cpp",
         "istream": "cpp",
         "thread": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "numeric": "cpp",
+        "ostream": "cpp",
+        "*.tcc": "cpp",
+        "unordered_map": "cpp"
     }
 }

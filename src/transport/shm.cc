@@ -73,7 +73,6 @@ ncclResult_t shmSendSetup(struct ncclTopoSystem* topo, struct ncclTopoGraph* gra
   //see: https://stackoverflow.com/questions/38049068/osx-shm-open-returns-enametoolong, only allows 32 on macOS
   sprintf(shmName, "sh-send-%llx-%d-%d-%d", info.pidHash, info.id, info.sendRank, info.recvRank);
   info.shmSize = resources->shmSize = sizeof(struct ncclSendMem);
-  // TRACE(NCCL_SHM,"Open shmName %s shmSize %d", shmName, info.shmSize);
   INFO(NCCL_ALL,"Open shmName %s shmSize %d", shmName, info.shmSize);
   NCCLCHECK(shmOpen(shmName, resources->shmSize, (void**)&resources->hostMem, (void**)&resources->devHostMem, 1));
 
