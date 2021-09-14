@@ -319,7 +319,7 @@ make install PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/driver
 
 2, NCCL 2.5.6 development guideline (Currently Orlando used 2.5.7-1 as based line, but documentation should keep consistent with 2.5.6)  
 
-* As the first milestone aims at migration of source code of 2.5.7 and partially support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have
+* As the first milestone aims at migration of source code of 2.5.7 and fully support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have
 * General development guide, refer to <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/index.html>  
 * About enabling tracing and logging for debugging purposes, refer to <https://github.com/NVIDIA/nccl/issues/197> and environment variable for controlling log of nccl 2.5.6 in <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_256/nccl-developer-guide/docs/env.htm>
 
