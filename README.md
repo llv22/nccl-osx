@@ -1,6 +1,10 @@
 # NCCL on macOS with stub libraries
 
 Optimized primitives for collective multi-GPU communication migrated to Mac OS X (10.13 - 10.13.6).
+In order to make library and nccl-test compatible, each nccl library version will be unique mapped to nccl-test on macOS version. When you start your work from my version, please also keep in mind.
+
+* [nccl-2.5.7-1-release](https://github.com/llv22/nccl-osx/tree/dev-2.5.7-for-jax) should be tested by [nccl-tests-v2.0.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.0.0-built).
+
 
 ## Motivation
 
