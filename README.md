@@ -337,4 +337,4 @@ In fact, not all functions of NCCL works on Mac OS X.
 
 All source code and accompanying documentation is copyright (c) 2015-2019, NVIDIA CORPORATION. All rights reserved.
 
-Migration to Mac OS X is done by [TomHeaven](https://github.com/TomHeaven/nccl-osx) and [Orlando](https://github.com/llv22).
+Migration to Mac OS X is done by [Orlando](https://github.com/llv22) and [TomHeaven](https://github.com/TomHeaven/nccl-osx).
