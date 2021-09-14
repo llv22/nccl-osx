@@ -311,19 +311,9 @@ Install on local folder
 make install PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-2.5.7
 ```
 
-## Tests
-
-There are problems of compiling [nccl-tests](https://github.com/nvidia/nccl-tests) on Mac OS X.
-
-In fact, not all functions of NCCL works on Mac OS X.
-
-* This project is to help Pytorch-osx-build
-* This project also aims at making JAX XLA bridge working
-* Not all functionalities have been successfully passed
-
 ## Todo
 
-1, whether dylib is needed?  
+1, why addtional dylib for macOS is needed?  
 
 * refer to <https://developer.apple.com/forums/thread/26542>
 
