@@ -4,7 +4,7 @@
 /coverage/
 nccl-*/
 test/sharedmem
-test/sharedmem.dSYM/
 test/thread_coll
-test/thread_coll.dSYM/
+test/ipv6_socket
+test/*.dSYM/
 .DS_Store
