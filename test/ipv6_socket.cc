@@ -14,6 +14,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <pthread.h>
 
 #define MAX_IFS 16
 #define MAX_IF_NAME_SIZE 16
@@ -36,6 +37,30 @@ union socketAddress
     struct sockaddr_in sin;
     struct sockaddr_in6 sin6;
 };
+
+/* Init functions */
+static char ncclNetIfNames[MAX_IF_NAME_SIZE*MAX_IFS];
+static union socketAddress ncclNetIfAddrs[MAX_IFS];
+static int ncclNetIfs = -1;
+pthread_mutex_t ncclSocketLock = PTHREAD_MUTEX_INITIALIZER;
+
+static bool matchPort(const int port1, const int port2)
+{
+    if (port1 == -1)
+        return true;
+    if (port2 == -1)
+        return true;
+    if (port1 == port2)
+        return true;
+    return false;
+}
+
+static bool matchIf(const char *string, const char *ref, bool matchExact)
+{
+    // Make sure to include '\0' in the exact case
+    int matchLen = matchExact ? strlen(string) + 1 : strlen(ref);
+    return strncmp(string, ref, matchLen) == 0;
+}
 
 int parseStringList(const char *string, struct netIf *ifList, int maxList)
 {
@@ -82,147 +107,18 @@ int parseStringList(const char *string, struct netIf *ifList, int maxList)
     return ifNum;
 }
 
-static bool matchPort(const int port1, const int port2)
-{
-    if (port1 == -1)
-        return true;
-    if (port2 == -1)
-        return true;
-    if (port1 == port2)
-        return true;
-    return false;
-}
-
-static bool matchIf(const char *string, const char *ref, bool matchExact)
-{
-    // Make sure to include '\0' in the exact case
-    int matchLen = matchExact ? strlen(string) + 1 : strlen(ref);
-    return strncmp(string, ref, matchLen) == 0;
-}
-
-bool matchIfList(const char *string, int port, struct netIf *ifList, int listSize, bool matchExact)
-{
-    // Make an exception for the case where no user list is defined
-    if (listSize == 0)
-        return true;
-
-    for (int i = 0; i < listSize; i++)
-    {
-        if (matchIf(string, ifList[i].prefix, matchExact) && matchPort(port, ifList[i].port))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-static inline const char *socketToString(struct sockaddr *saddr, char *buf)
-{
-    if (buf == NULL || saddr == NULL)
-        return NULL;
-    if (saddr->sa_family != AF_INET && saddr->sa_family != AF_INET6)
-    {
-        buf[0] = '\0';
-        return buf;
-    }
-    char host[NI_MAXHOST], service[NI_MAXSERV];
-    (void)getnameinfo(saddr, sizeof(union socketAddress), host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICHOST | NI_NUMERICSERV);
-    sprintf(buf, "%s<%s>", host, service);
-    return buf;
-}
-
-static inline uint16_t socketToPort(struct sockaddr *saddr)
-{
-    return ntohs(saddr->sa_family == AF_INET ? ((struct sockaddr_in *)saddr)->sin_port : ((struct sockaddr_in6 *)saddr)->sin6_port);
-}
-
 /* Allow the user to force the IPv4/IPv6 interface selection */
-static inline int envSocketFamily(void)
-{
-    int family = -1; // Family selection is not forced, will use first one found
-    char *env = getenv("NCCL_SOCKET_FAMILY");
-    if (env == NULL)
-        return family;
-
-    if (strcmp(env, "AF_INET") == 0)
-        family = AF_INET; // IPv4
-    else if (strcmp(env, "AF_INET6") == 0)
-        family = AF_INET6; // IPv6
+static inline int envSocketFamily(void) {
+  int family = -1; // Family selection is not forced, will use first one found
+  char* env = getenv("NCCL_SOCKET_FAMILY");
+  if (env == NULL)
     return family;
-}
 
-static int findInterfaces(const char *prefixList, char *names, union socketAddress *addrs, int sock_family, int maxIfNameSize, int maxIfs)
-{
-#ifdef ENABLE_TRACE
-    char line[1024];
-#endif
-    struct netIf userIfs[MAX_IFS];
-    bool searchNot = prefixList && prefixList[0] == '^';
-    if (searchNot)
-        prefixList++;
-    bool searchExact = prefixList && prefixList[0] == '=';
-    if (searchExact)
-        prefixList++;
-    int nUserIfs = parseStringList(prefixList, userIfs, MAX_IFS);
-
-    int found = 0;
-    struct ifaddrs *interfaces, *interface;
-    getifaddrs(&interfaces);
-    for (interface = interfaces; interface && found < maxIfs; interface = interface->ifa_next)
-    {
-        if (interface->ifa_addr == NULL)
-            continue;
-
-        /* We only support IPv4 & IPv6 */
-        int family = interface->ifa_addr->sa_family;
-        if (family != AF_INET && family != AF_INET6)
-            continue;
-
-        // TRACE(NCCL_INIT|NCCL_NET,"Found interface %s:%s", interface->ifa_name, socketToString(interface->ifa_addr, line));
-
-        /* Allow the caller to force the socket family type */
-        if (sock_family != -1 && family != sock_family)
-            continue;
-
-        /* We also need to skip IPv6 loopback interfaces */
-        if (family == AF_INET6)
-        {
-            struct sockaddr_in6 *sa = (struct sockaddr_in6 *)(interface->ifa_addr);
-            if (IN6_IS_ADDR_LOOPBACK(&sa->sin6_addr))
-                continue;
-        }
-
-        // check against user specified interfaces
-        if (!(matchIfList(interface->ifa_name, -1, userIfs, nUserIfs, searchExact) ^ searchNot))
-        {
-            continue;
-        }
-
-        // Check that this interface has not already been saved
-        // getifaddrs() normal order appears to be; IPv4, IPv6 Global, IPv6 Link
-        bool duplicate = false;
-        for (int i = 0; i < found; i++)
-        {
-            if (strcmp(interface->ifa_name, names + i * maxIfNameSize) == 0)
-            {
-                duplicate = true;
-                break;
-            }
-        }
-
-        if (!duplicate)
-        {
-            // Store the interface name
-            strncpy(names + found * maxIfNameSize, interface->ifa_name, maxIfNameSize);
-            // Store the IP address
-            int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
-            memcpy(addrs + found, interface->ifa_addr, salen);
-            found++;
-        }
-    }
-
-    freeifaddrs(interfaces);
-    return found;
+  if (strcmp(env, "AF_INET") == 0)
+    family = AF_INET;  // IPv4
+  else if (strcmp(env, "AF_INET6") == 0)
+    family = AF_INET6; // IPv6
+  return family;
 }
 
 static bool matchSubnet(struct ifaddrs local_if, union socketAddress *remote)
@@ -277,50 +173,33 @@ static bool matchSubnet(struct ifaddrs local_if, union socketAddress *remote)
     }
 }
 
-static int findInterfaceMatchSubnet(char *ifNames, union socketAddress *localAddrs, union socketAddress *remoteAddr, int ifNameMaxSize, int maxIfs)
+/* Format a string representation of a (struct sockaddr *) socket address using getnameinfo()
+ *
+ * Output: "IPv4/IPv6 address<port>"
+ */
+static inline const char *socketToString(struct sockaddr *saddr, char *buf) {
+  if (buf == NULL || saddr == NULL) return NULL;
+  if (saddr->sa_family != AF_INET && saddr->sa_family != AF_INET6) { buf[0]='\0'; return buf; }
+  char host[NI_MAXHOST], service[NI_MAXSERV];
+  (void) getnameinfo(saddr, sizeof(union socketAddress), host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICHOST|NI_NUMERICSERV);
+  sprintf(buf, "%s<%s>", host, service);
+  return buf;
+}
+
+bool matchIfList(const char *string, int port, struct netIf *ifList, int listSize, bool matchExact)
 {
-#ifdef ENABLE_TRACE
-    char line[1024];
-#endif
-    char line_a[1024];
-    int found = 0;
-    struct ifaddrs *interfaces, *interface;
-    getifaddrs(&interfaces);
-    for (interface = interfaces; interface && !found; interface = interface->ifa_next)
+    // Make an exception for the case where no user list is defined
+    if (listSize == 0)
+        return true;
+
+    for (int i = 0; i < listSize; i++)
     {
-        if (interface->ifa_addr == NULL)
-            continue;
-
-        /* We only support IPv4 & IPv6 */
-        int family = interface->ifa_addr->sa_family;
-        if (family != AF_INET && family != AF_INET6)
-            continue;
-
-        // check against user specified interfaces
-        if (!matchSubnet(*interface, remoteAddr))
+        if (matchIf(string, ifList[i].prefix, matchExact) && matchPort(port, ifList[i].port))
         {
-            continue;
+            return true;
         }
-
-        // Store the local IP address
-        int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
-        memcpy(localAddrs + found, interface->ifa_addr, salen);
-
-        // Store the interface name
-        strncpy(ifNames + found * ifNameMaxSize, interface->ifa_name, ifNameMaxSize);
-
-        // TRACE(NCCL_INIT|NCCL_NET,"NET : Found interface %s:%s in the same subnet as remote address %s", interface->ifa_name, socketToString(&(localAddrs[found].sa), line), socketToString(&(remoteAddr->sa), line_a));
-        found++;
-        if (found == maxIfs)
-            break;
     }
-
-    if (found == 0)
-    {
-        WARN("Net : No interface found in the same subnet as remote address %s", socketToString(&(remoteAddr->sa), line_a));
-    }
-    freeifaddrs(interfaces);
-    return found;
+    return false;
 }
 
 static int GetSocketAddrFromString(union socketAddress *ua, const char *ip_port_pair)
@@ -418,6 +297,126 @@ static int GetSocketAddrFromString(union socketAddress *ua, const char *ip_port_
     return 0;
 }
 
+static int findInterfaces(const char *prefixList, char *names, union socketAddress *addrs, int sock_family, int maxIfNameSize, int maxIfs)
+{
+#ifdef ENABLE_TRACE
+    char line[1024];
+#endif
+    struct netIf userIfs[MAX_IFS];
+    bool searchNot = prefixList && prefixList[0] == '^';
+    if (searchNot)
+        prefixList++;
+    bool searchExact = prefixList && prefixList[0] == '=';
+    if (searchExact)
+        prefixList++;
+    int nUserIfs = parseStringList(prefixList, userIfs, MAX_IFS);
+
+    int found = 0;
+    struct ifaddrs *interfaces, *interface;
+    getifaddrs(&interfaces);
+    for (interface = interfaces; interface && found < maxIfs; interface = interface->ifa_next)
+    {
+        if (interface->ifa_addr == NULL)
+            continue;
+
+        /* We only support IPv4 & IPv6 */
+        int family = interface->ifa_addr->sa_family;
+        if (family != AF_INET && family != AF_INET6)
+            continue;
+
+        // TRACE(NCCL_INIT|NCCL_NET,"Found interface %s:%s", interface->ifa_name, socketToString(interface->ifa_addr, line));
+
+        /* Allow the caller to force the socket family type */
+        if (sock_family != -1 && family != sock_family)
+            continue;
+
+        /* We also need to skip IPv6 loopback interfaces */
+        if (family == AF_INET6)
+        {
+            struct sockaddr_in6 *sa = (struct sockaddr_in6 *)(interface->ifa_addr);
+            if (IN6_IS_ADDR_LOOPBACK(&sa->sin6_addr))
+                continue;
+        }
+
+        // check against user specified interfaces
+        if (!(matchIfList(interface->ifa_name, -1, userIfs, nUserIfs, searchExact) ^ searchNot))
+        {
+            continue;
+        }
+
+        // Check that this interface has not already been saved
+        // getifaddrs() normal order appears to be; IPv4, IPv6 Global, IPv6 Link
+        bool duplicate = false;
+        for (int i = 0; i < found; i++)
+        {
+            if (strcmp(interface->ifa_name, names + i * maxIfNameSize) == 0)
+            {
+                duplicate = true;
+                break;
+            }
+        }
+
+        if (!duplicate)
+        {
+            // Store the interface name
+            strncpy(names + found * maxIfNameSize, interface->ifa_name, maxIfNameSize);
+            // Store the IP address
+            int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+            memcpy(addrs + found, interface->ifa_addr, salen);
+            found++;
+        }
+    }
+
+    freeifaddrs(interfaces);
+    return found;
+}
+
+static int findInterfaceMatchSubnet(char *ifNames, union socketAddress *localAddrs, union socketAddress *remoteAddr, int ifNameMaxSize, int maxIfs)
+{
+#ifdef ENABLE_TRACE
+    char line[1024];
+#endif
+    char line_a[1024];
+    int found = 0;
+    struct ifaddrs *interfaces, *interface;
+    getifaddrs(&interfaces);
+    for (interface = interfaces; interface && !found; interface = interface->ifa_next)
+    {
+        if (interface->ifa_addr == NULL)
+            continue;
+
+        /* We only support IPv4 & IPv6 */
+        int family = interface->ifa_addr->sa_family;
+        if (family != AF_INET && family != AF_INET6)
+            continue;
+
+        // check against user specified interfaces
+        if (!matchSubnet(*interface, remoteAddr))
+        {
+            continue;
+        }
+
+        // Store the local IP address
+        int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+        memcpy(localAddrs + found, interface->ifa_addr, salen);
+
+        // Store the interface name
+        strncpy(ifNames + found * ifNameMaxSize, interface->ifa_name, ifNameMaxSize);
+
+        // TRACE(NCCL_INIT|NCCL_NET,"NET : Found interface %s:%s in the same subnet as remote address %s", interface->ifa_name, socketToString(&(localAddrs[found].sa), line), socketToString(&(remoteAddr->sa), line_a));
+        found++;
+        if (found == maxIfs)
+            break;
+    }
+
+    if (found == 0)
+    {
+        WARN("Net : No interface found in the same subnet as remote address %s", socketToString(&(remoteAddr->sa), line_a));
+    }
+    freeifaddrs(interfaces);
+    return found;
+}
+
 static int findInterfaces(char *ifNames, union socketAddress *ifAddrs, int ifNameMaxSize, int maxIfs)
 {
     int nIfs = 0;
@@ -459,6 +458,36 @@ static int findInterfaces(char *ifNames, union socketAddress *ifAddrs, int ifNam
     return nIfs;
 }
 
+int ncclSocketInit() {
+  if (ncclNetIfs == -1) {
+    pthread_mutex_lock(&ncclSocketLock);
+    if (ncclNetIfs == -1) {
+      ncclNetIfs = findInterfaces(ncclNetIfNames, ncclNetIfAddrs, MAX_IF_NAME_SIZE, MAX_IFS);
+      if (ncclNetIfs <= 0) {
+        WARN("NET/Socket : no interface found");
+        return -1;
+      } else {
+        char line[1024];
+        char addrline[1024];
+        line[0] = '\0';
+        for (int i=0; i<ncclNetIfs; i++) {
+          snprintf(line+strlen(line), 1023-strlen(line), " [%d]%s:%s", i, ncclNetIfNames+i*MAX_IF_NAME_SIZE,
+              socketToString(&ncclNetIfAddrs[i].sa, addrline));
+        }
+        line[1023] = '\0';
+        INFO("NET/Socket : Using%s", line);
+      }
+    }
+    pthread_mutex_unlock(&ncclSocketLock);
+  }
+  return 0;
+}
+
+static inline uint16_t socketToPort(struct sockaddr *saddr)
+{
+    return ntohs(saddr->sa_family == AF_INET ? ((struct sockaddr_in *)saddr)->sin_port : ((struct sockaddr_in6 *)saddr)->sin6_port);
+}
+
 static int createListenSocket(int *fd, union socketAddress *localAddr)
 {
     /* IPv4/IPv6 support */
@@ -480,7 +509,7 @@ static int createListenSocket(int *fd, union socketAddress *localAddr)
 #if defined(SO_REUSEPORT)
         setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
 #else
-        SYSCHECK(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)), "setsockopt");
+        setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 #endif
     }
 
@@ -490,11 +519,9 @@ static int createListenSocket(int *fd, union socketAddress *localAddr)
     /* Get the assigned Port */
     socklen_t size = salen;
     getsockname(sockfd, &localAddr->sa, &size);
-
-#ifdef ENABLE_TRACE
+    
     char line[1024];
-    TRACE(NCCL_INIT | NCCL_NET, "Listening on socket %s", socketToString(&localAddr->sa, line));
-#endif
+    INFO("Listening on socket %s", socketToString(&localAddr->sa, line));
 
     /* Put the socket in listen mode
    * NB: The backlog will be silently truncated to the value in /proc/sys/net/core/somaxconn
@@ -592,5 +619,7 @@ static int socketProgressOpt(int op, int fd, void *ptr, int size, int *offset, i
 
 int main()
 {
+    int status = ncclSocketInit();
+    printf("socket initialization status: %d\n", status);
     return 0;
 }
