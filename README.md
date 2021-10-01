@@ -164,9 +164,9 @@ These operations are implemented using ring algorithms and have been optimized f
 
 ### Finished milestones
 
-* [NCCL-macOS 2.5.7.1 release full](https://github.com/llv22/nccl-osx/releases/tag/nccl-macOS-2.5.7-1-release-full) is the first milestone which finishes the migration from linux to ubuntu system. 
+* [NCCL-macOS 2.5.7.1 release full](https://github.com/llv22/nccl-osx/releases/tag/nccl-macOS-2.5.7-1-release-full) is the first milestone which finishes the migration from linux to ubuntu system.
 
-* [NCCL]
+* [NCCL-macOS 2.5.7.2 release full](https://github.com/llv22/nccl-osx/releases/tag/nccl-macOS-2.5.7-2-release-full) fixes the issue of initializing nccl library on macOS during setup of the socket server.
 
 ### Next step
 
