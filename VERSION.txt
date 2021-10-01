@@ -1,2 +1,2 @@
-NCCL-macOS 2.5.7
+NCCL-macOS 2.5.7-2
 originated from NCCL official 2.5.7-1

@@ -8,3 +8,4 @@ test/thread_coll
 test/ipv6_socket
 test/*.dSYM/
 .DS_Store
+ext-net/dummy/libnccl-net.dylib
