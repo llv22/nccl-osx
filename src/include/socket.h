@@ -50,8 +50,12 @@ static inline uint16_t socketToPort(struct sockaddr *saddr) {
 static inline int envSocketFamily(void) {
   int family = -1; // Family selection is not forced, will use first one found
   char* env = getenv("NCCL_SOCKET_FAMILY");
-  if (env == NULL)
+  if (env == NULL){
+#if defined(__APPLE__) && defined(__MACH__)
+    family = AF_INET;  // IPv4 for default on macOS
+#endif
     return family;
+  }
 
   if (strcmp(env, "AF_INET") == 0)
     family = AF_INET;  // IPv4
