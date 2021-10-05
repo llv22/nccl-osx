@@ -12,6 +12,10 @@ cp VERSION.txt build/
 cd ext-net/dummy/ # for libnccl-net.so
 make
 cd ../../build
+mkdir -p /usr/local/nccl-${version}
+cp -rf include /usr/local/nccl-${version}/include
+cp -rf lib /usr/local/nccl-${version}/lib
+cp -rf *.txt /usr/local/nccl-${version}/
 tar -czvf nccl-${version}-release-full.tar.gz *.txt lib/ include/
 ```
 
