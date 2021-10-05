@@ -4,6 +4,7 @@ Optimized primitives for collective multi-GPU communication migrated to Mac OS X
 In order to make library and nccl-test compatible, each nccl library version will be unique mapped to nccl-test on macOS version. When you start your work from my version, please also keep in mind.
 
 * [nccl-2.5.7-1-release](https://github.com/llv22/nccl-osx/tree/dev-2.5.7-for-jax) should be tested by [nccl-tests-v2.0.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.0.0-built).
+* [nccl-2.5.8-release](https://github.com/llv22/nccl-osx/tree/dev-2.5.8-for-jax) should be tested by [nccl-tests-v2.0.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.0.0-built). This is the first major release which fixes IPv6 address issue on macOS and enables nccl to run for TF/JAX. You can also use [Jax pmap notebook](https://github.com/llv22/jax-macOS-cuda/blob/jax-built-v0.2.6/examples/jax_startup.ipynb) for further client testing.
 
 ## Motivation
 
@@ -55,10 +56,6 @@ You can easily reproduce my result from <https://github.com/llv22/nccl-tests-mac
 ===begin all_reduce_perf test===
 # nThread 1 nGpus 2 minBytes 8 maxBytes 134217728 step: 2(factor) warmup iters: 5 iters: 20 validation: 1 
 #
-# Using devices
-#   Rank  0 Pid  12978 on    Orlando device  0 [0x45] GeForce GTX 1080
-#   Rank  1 Pid  12978 on    Orlando device  1 [0xc4] GeForce GTX 1080
-#
 #                                                     out-of-place                       in-place          
 #       size         count    type   redop     time   algbw   busbw  error     time   algbw   busbw  error
 #        (B)    (elements)                     (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
@@ -75,10 +72,6 @@ You can easily reproduce my result from <https://github.com/llv22/nccl-tests-mac
 
 ===begin all_gather_perf test===
 # nThread 1 nGpus 2 minBytes 8 maxBytes 134217728 step: 2(factor) warmup iters: 5 iters: 20 validation: 1 
-#
-# Using devices
-#   Rank  0 Pid  12979 on    Orlando device  0 [0x45] GeForce GTX 1080
-#   Rank  1 Pid  12979 on    Orlando device  1 [0xc4] GeForce GTX 1080
 #
 #                                             out-of-place                       in-place          
 #       size         count    type     time   algbw   busbw  error     time   algbw   busbw  error
@@ -97,10 +90,6 @@ You can easily reproduce my result from <https://github.com/llv22/nccl-tests-mac
 ===begin broadcast_perf test===
 # nThread 1 nGpus 2 minBytes 8 maxBytes 134217728 step: 2(factor) warmup iters: 5 iters: 20 validation: 1 
 #
-# Using devices
-#   Rank  0 Pid  12991 on    Orlando device  0 [0x45] GeForce GTX 1080
-#   Rank  1 Pid  12991 on    Orlando device  1 [0xc4] GeForce GTX 1080
-#
 #                                                     out-of-place                       in-place          
 #       size         count    type    root     time   algbw   busbw  error     time   algbw   busbw  error
 #        (B)    (elements)                     (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
@@ -118,10 +107,6 @@ You can easily reproduce my result from <https://github.com/llv22/nccl-tests-mac
 ===begin reduce_perf test===
 # nThread 1 nGpus 2 minBytes 8 maxBytes 134217728 step: 2(factor) warmup iters: 5 iters: 20 validation: 1 
 #
-# Using devices
-#   Rank  0 Pid  13003 on    Orlando device  0 [0x45] GeForce GTX 1080
-#   Rank  1 Pid  13003 on    Orlando device  1 [0xc4] GeForce GTX 1080
-#
 #                                                     out-of-place                       in-place          
 #       size         count    type   redop    root     time   algbw   busbw  error     time   algbw   busbw  error
 #        (B)    (elements)                             (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
@@ -138,10 +123,6 @@ You can easily reproduce my result from <https://github.com/llv22/nccl-tests-mac
 
 ===begin reduce_scatter_perf test===
 # nThread 1 nGpus 2 minBytes 8 maxBytes 134217728 step: 2(factor) warmup iters: 5 iters: 20 validation: 1 
-#
-# Using devices
-#   Rank  0 Pid  13004 on    Orlando device  0 [0x45] GeForce GTX 1080
-#   Rank  1 Pid  13004 on    Orlando device  1 [0xc4] GeForce GTX 1080
 #
 #                                                     out-of-place                       in-place          
 #       size         count    type   redop     time   algbw   busbw  error     time   algbw   busbw  error
@@ -221,6 +202,8 @@ make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_
 ```
 
 ## Install
+
+Current release version: nccl-2.5.8, refer to **the branch dev-2.5.8-for-jax**
 
 1, install on default local /usr/local
 
