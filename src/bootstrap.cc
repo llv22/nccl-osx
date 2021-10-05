@@ -105,9 +105,10 @@ static ncclResult_t bootstrapNetAccept(void* listenComm, void** recvComm) {
   struct sockaddr_in sockaddr;
   socklen_t socklen = sizeof(struct sockaddr_in);
   SYSCHECKVAL(accept(lComm->fd, (struct sockaddr*)&sockaddr, &socklen), "accept", rComm->fd);
-  INFO(NCCL_ALL, "accept %s:%d", sockaddr.sin_zero, sockaddr.sin_port);
+  char line[1024];
+  INFO(NCCL_ALL, "accept %s:%d", socketToString((struct sockaddr*)&sockaddr, line), sockaddr.sin_port);
   *recvComm = rComm;
-  return ncclSuccess;
+  return ncclSuccess; 
 }
 
 static ncclResult_t bootstrapNetClose(void* opaqueComm) {
