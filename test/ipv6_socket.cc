@@ -18,9 +18,25 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/syslimits.h>
+
+#if defined(__APPLE__) && defined(__MACH__)
 #include <algorithm>
 #include <map>
 #include <string>
+
+using namespace std;
+
+struct linkedAddr
+{
+  bool supportIPv4;
+  bool supportIPv6;
+};
+
+__inline__ void destory(std::pair<string, linkedAddr*> p)
+{
+    delete p.second;
+}
+#endif
 
 #define MAX_IFS 16
 #define MAX_IF_NAME_SIZE 16
@@ -57,12 +73,6 @@ struct netIf
 {
   char prefix[64];
   int port;
-};
-
-struct linkedAddr
-{
-  bool supportIPv4;
-  bool supportIPv6;
 };
 
 /* Common socket address storage structure for IPv4/IPv6 */
@@ -513,6 +523,12 @@ static int findInterfaces(const char *prefixList, char *names, union socketAddre
   }
 
   freeifaddrs(interfaces);
+
+  #if defined(__APPLE__) && defined(__MACH__)
+  if(ethMap.size() > 0){
+    for_each(ethMap.begin(), ethMap.end(), destory);
+  }
+  #endif
 
   return found;
 }

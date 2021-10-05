@@ -16,6 +16,25 @@
 #include <net/if.h>
 #include "utils.h"
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include <algorithm>
+#include <map>
+#include <string>
+using namespace std;
+
+struct linkedAddr
+{
+  bool supportIPv4;
+  bool supportIPv6;
+};
+
+__inline__ void destory(std::pair<string, linkedAddr*> p)
+{
+    delete p.second;
+}
+
+#endif
+
 #define MAX_IFS 16
 #define MAX_IF_NAME_SIZE 16
 #define SLEEP_INT            1000 // connection retry sleep interval in usec
@@ -51,9 +70,7 @@ static inline int envSocketFamily(void) {
   int family = -1; // Family selection is not forced, will use first one found
   char* env = getenv("NCCL_SOCKET_FAMILY");
   if (env == NULL){
-#if defined(__APPLE__) && defined(__MACH__)
-    family = AF_INET;  // IPv4 for default on macOS
-#endif
+    //see: already fix the issue on macOS system, don't need this any more
     return family;
   }
 
@@ -74,6 +91,80 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
   bool searchExact = prefixList && prefixList[0] == '=';
   if (searchExact) prefixList++;
   int nUserIfs = parseStringList(prefixList, userIfs, MAX_IFS);
+
+#if defined(__APPLE__) && defined(__MACH__)
+  map<string, linkedAddr*> ethMap;
+  struct ifaddrs *interfaces_p, *interface_p;
+  getifaddrs(&interfaces_p);
+  int c = 0;
+
+  for (interface_p = interfaces_p; interface_p && c < maxIfs; interface_p = interface_p->ifa_next)
+  {
+    if (interface_p->ifa_addr == NULL)
+      continue;
+    /* We only support IPv4 & IPv6 */
+    int family = interface_p->ifa_addr->sa_family;
+    if (family != AF_INET && family != AF_INET6)
+      continue;
+    if ((interface_p->ifa_flags & (IFF_UP|IFF_RUNNING|IFF_LOOPBACK)) != (IFF_UP|IFF_RUNNING)) {
+      //see: if not up and running
+      continue;
+    }
+
+    string ethName = interface_p->ifa_name;
+    map<string, linkedAddr*>::iterator it = ethMap.find(ethName);
+    if (it != ethMap.end()) {
+      if (family == AF_INET6) {
+        it->second->supportIPv6 = true;
+      }
+      if (family == AF_INET) {
+        it->second->supportIPv4 = true;
+      }
+    }
+    else {
+      linkedAddr* addr = new linkedAddr; 
+      if (family == AF_INET6) {
+        addr->supportIPv6 = true;
+      }
+      if (family == AF_INET) {
+        addr->supportIPv4 = true;
+      }
+      ethMap[ethName] = addr;
+    }
+    /* We also need to skip IPv6 loopback interfaces */
+    if (family == AF_INET6)
+    {
+      struct sockaddr_in6 *sa = (struct sockaddr_in6 *)(interface_p->ifa_addr);
+      if (IN6_IS_ADDR_LOOPBACK(&sa->sin6_addr))
+        continue;
+    }
+
+    // check against user specified interfaces
+    if (!(matchIfList(interface_p->ifa_name, -1, userIfs, nUserIfs, searchExact) ^ searchNot))
+    {
+      continue;
+    }
+
+    // Check that this interface has not already been saved
+    // getifaddrs() normal order appears to be; IPv4, IPv6 Global, IPv6 Link
+    bool duplicate = false;
+    for (int i = 0; i < c; i++)
+    {
+      if (strcmp(interface_p->ifa_name, names + i * maxIfNameSize) == 0)
+      {
+        duplicate = true;
+        break;
+      }
+    }
+
+    if (!duplicate)
+    {
+      c++;
+    }
+  }
+
+  freeifaddrs(interfaces_p);
+#endif
 
   int found = 0;
   struct ifaddrs *interfaces, *interface;
@@ -110,17 +201,38 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
       if (strcmp(interface->ifa_name, names+i*maxIfNameSize) == 0) { duplicate = true; break; }
     }
 
-    if (!duplicate) {
+    if (!duplicate)
+    {
+  #if defined(__APPLE__) && defined(__MACH__)
+      string ethName = interface->ifa_name;
+      map<string, linkedAddr*>::iterator it = ethMap.find(ethName);
+      if (it != ethMap.end() && it->second->supportIPv4 && it->second->supportIPv6) {
+        // Store the interface name
+        strncpy(names + found * maxIfNameSize, interface->ifa_name, maxIfNameSize);
+        // Store the IP address
+        int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+        memcpy(addrs + found, interface->ifa_addr, salen);
+        found++;
+      }
+  #else
       // Store the interface name
-      strncpy(names+found*maxIfNameSize, interface->ifa_name, maxIfNameSize);
+      strncpy(names + found * maxIfNameSize, interface->ifa_name, maxIfNameSize);
       // Store the IP address
       int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
-      memcpy(addrs+found, interface->ifa_addr, salen);
+      memcpy(addrs + found, interface->ifa_addr, salen);
       found++;
+  #endif
     }
   }
 
   freeifaddrs(interfaces);
+
+  #if defined(__APPLE__) && defined(__MACH__)
+  if(ethMap.size() > 0){
+    for_each(ethMap.begin(), ethMap.end(), destory);
+  }
+  #endif
+  
   return found;
 }
 
