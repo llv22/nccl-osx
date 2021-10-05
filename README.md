@@ -171,7 +171,7 @@ These operations are implemented using ring algorithms and have been optimized f
 ### Next step
 
 * Investigation with why IPv6 socket server isn't working on macOS via <https://github.com/llv22/nccl-osx/blob/dev-2.5.7-for-jax/test/ipv6_socket.cc>  
-* check if nccl library needs another upgrade, as now Jax 0.2.14 is needed by AlphaFold2, which can provide the key representation of the 3D protein structures 
+* check if nccl library needs another upgrade, as now Jax 0.2.14 is needed by AlphaFold2, which can provide the key representation of the 3D protein structures
 
 ## Requirements
 
