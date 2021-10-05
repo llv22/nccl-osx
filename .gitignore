@@ -9,3 +9,4 @@ test/ipv6_socket
 test/*.dSYM/
 .DS_Store
 ext-net/dummy/libnccl-net.dylib
+ext-net/dummy/libnccl-net.so
