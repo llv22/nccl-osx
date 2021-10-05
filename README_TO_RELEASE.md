@@ -16,6 +16,8 @@ mkdir -p /usr/local/nccl-${version}
 cp -rf include /usr/local/nccl-${version}/include
 cp -rf lib /usr/local/nccl-${version}/lib
 cp -rf *.txt /usr/local/nccl-${version}/
+rm -rf /usr/loca/nccl
+ln -s -f /usr/local/nccl-${version}/ /usr/local/nccl
 tar -czvf nccl-${version}-release-full.tar.gz *.txt lib/ include/
 ```
 
