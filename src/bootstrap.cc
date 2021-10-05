@@ -102,11 +102,11 @@ static ncclResult_t bootstrapNetAccept(void* listenComm, void** recvComm) {
   struct bootstrapNetComm* lComm = (struct bootstrapNetComm*)listenComm;
   struct bootstrapNetComm* rComm;
   NCCLCHECK(bootstrapNetNewComm(&rComm));
-  struct sockaddr_in sockaddr;
-  socklen_t socklen = sizeof(struct sockaddr_in);
-  SYSCHECKVAL(accept(lComm->fd, (struct sockaddr*)&sockaddr, &socklen), "accept", rComm->fd);
+  union socketAddress sockaddr;
+  socklen_t socklen = sizeof(union socketAddress);
+  SYSCHECKVAL(accept(lComm->fd, &sockaddr.sa, &socklen), "accept", rComm->fd);
   char line[1024];
-  INFO(NCCL_ALL, "accept %s:%d", socketToString((struct sockaddr*)&sockaddr, line), sockaddr.sin_port);
+  INFO(NCCL_ALL, "accept %s:%d", socketToString(&sockaddr.sa, line), sockaddr.sa.sa_family == AF_INET6? sockaddr.sin6.sin6_port : sockaddr.sin.sin_port);
   *recvComm = rComm;
   return ncclSuccess; 
 }

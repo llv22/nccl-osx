@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "src/include/**",
+                "build/include/**",
                 "/Developer/NVIDIA/CUDA-10.1/include",
                 "/usr/local/cuda/include"
             ],
