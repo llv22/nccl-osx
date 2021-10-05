@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <map>
 #include <string>
-using namespace std;
 
 struct linkedAddr
 {
@@ -28,7 +27,7 @@ struct linkedAddr
   bool supportIPv6;
 };
 
-__inline__ void destory(std::pair<string, linkedAddr*> p)
+__inline__ void destory(std::pair<std::string, linkedAddr*> p)
 {
     delete p.second;
 }
@@ -93,7 +92,7 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
   int nUserIfs = parseStringList(prefixList, userIfs, MAX_IFS);
 
 #if defined(__APPLE__) && defined(__MACH__)
-  map<string, linkedAddr*> ethMap;
+  std::map<std::string, linkedAddr*> ethMap;
   struct ifaddrs *interfaces_p, *interface_p;
   getifaddrs(&interfaces_p);
   int c = 0;
@@ -111,8 +110,8 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
       continue;
     }
 
-    string ethName = interface_p->ifa_name;
-    map<string, linkedAddr*>::iterator it = ethMap.find(ethName);
+    std::string ethName = interface_p->ifa_name;
+    std::map<std::string, linkedAddr*>::iterator it = ethMap.find(ethName);
     if (it != ethMap.end()) {
       if (family == AF_INET6) {
         it->second->supportIPv6 = true;
@@ -204,8 +203,8 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
     if (!duplicate)
     {
   #if defined(__APPLE__) && defined(__MACH__)
-      string ethName = interface->ifa_name;
-      map<string, linkedAddr*>::iterator it = ethMap.find(ethName);
+      std::string ethName = interface->ifa_name;
+      std::map<std::string, linkedAddr*>::iterator it = ethMap.find(ethName);
       if (it != ethMap.end() && it->second->supportIPv4 && it->second->supportIPv6) {
         // Store the interface name
         strncpy(names + found * maxIfNameSize, interface->ifa_name, maxIfNameSize);
