@@ -1,0 +1,2 @@
+﻿NCCL-macOS 2.9.6
+originated from Nvidia/nccl official 2.9.6-1
