@@ -5,6 +5,7 @@
  ************************************************************************/
 
 #include "nccl.h"
+#include "cpuset.h"
 #include "channel.h"
 #include "nvmlwrap.h"
 #include "gdrwrap.h"
