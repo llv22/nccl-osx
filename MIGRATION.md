@@ -12,3 +12,8 @@ Compared via [2.9.6 to 2.5.8](https://github.com/llv22/nccl-osx/compare/dev-2.9.
 * SNVML-LICENSE.txt  
 * README_TO_RELEASE.md
 
+## 2. independent test
+
+copy from [Test folder of nccl2.5.8](https://github.com/llv22/nccl-osx/tree/dev-2.5.8-for-jax/test).
+
+## 3. src code change
