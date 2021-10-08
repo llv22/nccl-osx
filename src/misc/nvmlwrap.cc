@@ -12,20 +12,37 @@
 
 static enum { nvmlUninitialized, nvmlInitializing, nvmlInitialized, nvmlError } nvmlState = nvmlUninitialized;
 
-static nvmlReturn_t (*nvmlInternalInit)(void);
-static nvmlReturn_t (*nvmlInternalShutdown)(void);
-static nvmlReturn_t (*nvmlInternalDeviceGetHandleByPciBusId)(const char* pciBusId, nvmlDevice_t* device);
-static nvmlReturn_t (*nvmlInternalDeviceGetIndex)(nvmlDevice_t device, unsigned* index);
+/**
+ * This section must be implemented in order to make nccl working.
+ */
+//0, mapping to nvmlErrorString in NVML API
 static const char* (*nvmlInternalErrorString)(nvmlReturn_t r);
+//1, mapping to nvmlInit in NVML API
+static nvmlReturn_t (*nvmlInternalInit)(void);
+//2, mapping to nvmlShutdown in NVML API
+static nvmlReturn_t (*nvmlInternalShutdown)(void);
+//3, mapping to nvmlDeviceGetHandleByPciBusId in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetHandleByPciBusId)(const char* pciBusId, nvmlDevice_t* device);
+//4, mapping to nvmlDeviceGetNvLinkState in NVML API
 static nvmlReturn_t (*nvmlInternalDeviceGetNvLinkState)(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive);
+//5, mapping to nvmlDeviceGetNvLinkRemotePciInfo in NVML API
 static nvmlReturn_t (*nvmlInternalDeviceGetNvLinkRemotePciInfo)(nvmlDevice_t device, unsigned int link, nvmlPciInfo_t *pci);
+//6, mapping to nvmlDeviceGetNvLinkCapability in NVML API
 static nvmlReturn_t (*nvmlInternalDeviceGetNvLinkCapability)(nvmlDevice_t device, unsigned int link,
     nvmlNvLinkCapability_t capability, unsigned int *capResult);
+//7, mapping to nvmlDeviceGetCudaComputeCapability in NVML API
 static nvmlReturn_t (*nvmlInternalDeviceGetCudaComputeCapability)(nvmlDevice_t device, int* major, int* minor);
+
+/**
+ * This section is optional in order to make nccl working.
+ */
+//8, mapping to nvmlDeviceGetIndex in NVML API
+static nvmlReturn_t (*nvmlInternalDeviceGetIndex)(nvmlDevice_t device, unsigned* index);
 
 // Used to make the NVML library calls thread safe
 pthread_mutex_t nvmlLock = PTHREAD_MUTEX_INITIALIZER;
 
+//see: used in init.cc Line795, only have to load libnvidia-ml.so.1, not blocker
 ncclResult_t wrapNvmlSymbols(void) {
   if (nvmlState == nvmlInitialized)
     return ncclSuccess;
@@ -34,7 +51,13 @@ ncclResult_t wrapNvmlSymbols(void) {
 
   if (__sync_bool_compare_and_swap(&nvmlState, nvmlUninitialized, nvmlInitializing) == false) {
     // Another thread raced in front of us. Wait for it to be done.
-    while (nvmlState == nvmlInitializing) pthread_yield();
+    while (nvmlState == nvmlInitializing) {
+#if defined(__APPLE__) && defined(__MACH__)
+      pthread_yield_np();
+#else
+      pthread_yield();
+#endif
+    }
     return (nvmlState == nvmlInitialized) ? ncclSuccess : ncclSystemError;
   }
 
@@ -91,10 +114,11 @@ teardown:
 
   if (nvmlhandle != NULL) dlclose(nvmlhandle);
   nvmlState = nvmlError;
+  INFO(NCCL_ALL, "failed to dlopen(\"libnvidia-ml.so.1\", RTLD_NOW)");
   return ncclSystemError;
 }
 
-
+//see: used in init.cc Line796
 ncclResult_t wrapNvmlInit(void) {
   if (nvmlInternalInit == NULL) {
     WARN("lib wrapper not initialized.");
@@ -109,6 +133,7 @@ ncclResult_t wrapNvmlInit(void) {
   return ncclSuccess;
 }
 
+//see: used in init.cc Line808
 ncclResult_t wrapNvmlShutdown(void) {
   if (nvmlInternalShutdown == NULL) {
     WARN("lib wrapper not initialized.");
@@ -123,6 +148,7 @@ ncclResult_t wrapNvmlShutdown(void) {
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line574
 ncclResult_t wrapNvmlDeviceGetHandleByPciBusId(const char* pciBusId, nvmlDevice_t* device) {
   if (nvmlInternalDeviceGetHandleByPciBusId == NULL) {
     WARN("lib wrapper not initialized.");
@@ -153,6 +179,7 @@ ncclResult_t wrapNvmlDeviceGetIndex(nvmlDevice_t device, unsigned* index) {
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line250
 ncclResult_t wrapNvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link, nvmlEnableState_t *isActive) {
   if (nvmlInternalDeviceGetNvLinkState == NULL) {
     /* Do not warn, this symbol is optional. */
@@ -169,6 +196,7 @@ ncclResult_t wrapNvmlDeviceGetNvLinkState(nvmlDevice_t device, unsigned int link
   return ncclSuccess;
 }
 
+//see: used in topo.cc Line254
 ncclResult_t wrapNvmlDeviceGetNvLinkRemotePciInfo(nvmlDevice_t device, unsigned int link, nvmlPciInfo_t *pci) {
   if (nvmlInternalDeviceGetNvLinkRemotePciInfo == NULL) {
     /* Do not warn, this symbol is optional. */

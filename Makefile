@@ -12,7 +12,7 @@ ABSBUILDDIR := $(abspath $(BUILDDIR))
 TARGETS := src pkg
 clean: ${TARGETS:%=%.clean}
 test.build: src.build
-LICENSE_FILES := LICENSE.txt
+LICENSE_FILES := LICENSE.txt SNVML-LICENSE.txt
 LICENSE_TARGETS := $(LICENSE_FILES:%=$(BUILDDIR)/%)
 lic: $(LICENSE_TARGETS)
 

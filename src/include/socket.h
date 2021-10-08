@@ -16,6 +16,12 @@
 #include <net/if.h>
 #include "utils.h"
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include <algorithm>
+#include <map>
+#include <string>
+#endif
+
 #define MAX_IFS 16
 #define MAX_IF_NAME_SIZE 16
 #define SLEEP_INT            1000 // connection retry sleep interval in usec
@@ -74,6 +80,50 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
   if (searchExact) prefixList++;
   int nUserIfs = parseStringList(prefixList, userIfs, MAX_IFS);
 
+#if defined(__APPLE__) && defined(__MACH__)
+  std::map<std::string, bool> ethMap;
+  struct ifaddrs *interfaces_p, *interface_p;
+  getifaddrs(&interfaces_p);
+
+  for (interface_p = interfaces_p; interface_p; interface_p = interface_p->ifa_next)
+  {
+    if (interface_p->ifa_addr == NULL)
+      continue;
+    /* We only support IPv4 & IPv6 */
+    int family = interface_p->ifa_addr->sa_family;
+    if (family != AF_INET && family != AF_INET6)
+      continue;
+    /* We also need to skip IPv6 loopback interfaces */
+    if (family == AF_INET6)
+    {
+      struct sockaddr_in6 *sa = (struct sockaddr_in6 *)(interface_p->ifa_addr);
+      if (IN6_IS_ADDR_LOOPBACK(&sa->sin6_addr))
+        continue;
+    }
+
+    // check against user specified interfaces
+    if (!(matchIfList(interface_p->ifa_name, -1, userIfs, nUserIfs, searchExact) ^ searchNot))
+    {
+      continue;
+    }
+
+    std::string ethName = interface_p->ifa_name;
+    std::map<std::string, bool>::iterator it = ethMap.find(ethName);
+    if (it != ethMap.end()) {
+      if (family == AF_INET) {
+        it->second = true;
+      }
+    }
+    else {
+      if (family == AF_INET) {
+        ethMap[ethName] = true;
+      }
+    }
+  }
+
+  freeifaddrs(interfaces_p);
+#endif
+
   int found = 0;
   struct ifaddrs *interfaces, *interface;
   getifaddrs(&interfaces);
@@ -109,13 +159,22 @@ static int findInterfaces(const char* prefixList, char* names, union socketAddre
       if (strcmp(interface->ifa_name, names+i*maxIfNameSize) == 0) { duplicate = true; break; }
     }
 
-    if (!duplicate) {
-      // Store the interface name
-      strncpy(names+found*maxIfNameSize, interface->ifa_name, maxIfNameSize);
-      // Store the IP address
-      int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
-      memcpy(addrs+found, interface->ifa_addr, salen);
-      found++;
+    if (!duplicate)
+    {
+  #if defined(__APPLE__) && defined(__MACH__)
+      std::string ethName = interface->ifa_name;
+      std::map<std::string, bool>::iterator it = ethMap.find(ethName);
+      if (it != ethMap.end() && it->second) {
+  #endif
+        // Store the interface name
+        strncpy(names + found * maxIfNameSize, interface->ifa_name, maxIfNameSize);
+        // Store the IP address
+        int salen = (family == AF_INET) ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+        memcpy(addrs + found, interface->ifa_addr, salen);
+        found++;
+  #if defined(__APPLE__) && defined(__MACH__)
+      }
+  #endif
     }
   }
 
@@ -387,7 +446,8 @@ static ncclResult_t connectAddress(int* fd, union socketAddress* remoteAddr) {
     SYSCHECK(setsockopt(*fd, SOL_SOCKET, SO_RCVBUF, (char*)&bufsize, sizeof(int)), "setsockopt");*/
 
   char line[SOCKET_NAME_MAXLEN+1];
-  TRACE(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
+  INFO(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
+  // TRACE(NCCL_INIT|NCCL_NET,"Connecting to socket %s", socketToString(&remoteAddr->sa, line));
 
   int ret;
   int timedout_retries = 0;

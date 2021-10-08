@@ -12,6 +12,7 @@
 #include "socket.h"
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/syslimits.h>
 
 /* Init functions */
 static char bootstrapNetIfName[MAX_IF_NAME_SIZE+1];
@@ -59,6 +60,8 @@ static ncclResult_t bootstrapNetAccept(int listenFd, int* recvFd) {
   struct sockaddr_in sockaddr;
   socklen_t socklen = sizeof(struct sockaddr_in);
   SYSCHECKVAL(accept(listenFd, (struct sockaddr*)&sockaddr, &socklen), "accept", *recvFd);
+  char line[1024];
+  INFO(NCCL_ALL, "accept %s:%d", socketToString((struct sockaddr*)&sockaddr, line), sockaddr.sin_port);
   return ncclSuccess;
 }
 
@@ -92,6 +95,12 @@ static ncclResult_t setFilesLimit() {
   struct rlimit filesLimit;
   SYSCHECK(getrlimit(RLIMIT_NOFILE, &filesLimit), "getrlimit");
   filesLimit.rlim_cur = filesLimit.rlim_max;
+  // see: orlando already fixed this issue, "setrlimit cause warning on osx: [0] bootstrap.cc:162 NCCL WARN Call to setrlimit failed : Invalid argument" 
+  // refer to https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/setrlimit.2.html
+  if (filesLimit.rlim_cur > OPEN_MAX) {
+    filesLimit.rlim_cur = OPEN_MAX;
+    INFO(NCCL_ALL, "adjust filesLimit.rlim_cur to OPEN_MAX = %d", filesLimit.rlim_cur);
+  }
   SYSCHECK(setrlimit(RLIMIT_NOFILE, &filesLimit), "setrlimit");
   return ncclSuccess;
 }
@@ -138,7 +147,8 @@ static void *bootstrapRoot(void* args) {
     ++c;
     TRACE(NCCL_INIT, "Received connect from rank %d total %d/%d",  info.rank, c, nranks);
   } while (c < nranks);
-  TRACE(NCCL_INIT, "COLLECTED ALL %d HANDLES", nranks);
+  // TRACE(NCCL_INIT, "COLLECTED ALL %d HANDLES", nranks);
+  INFO(NCCL_INIT, "COLLECTED ALL %d HANDLES", nranks);
 
   // Send the connect handle for the next rank in the AllGather ring
   for (int r=0; r<nranks; ++r) {

@@ -48,7 +48,13 @@ ncclResult_t wrap_ibv_symbols(void) {
 
   if (__sync_bool_compare_and_swap(&ibvState, ibvUninitialized, ibvInitializing) == false) {
     // Another thread raced in front of us. Wait for it to be done.
-    while (ibvState == ibvInitializing) pthread_yield();
+    while (ibvState == ibvInitializing) {
+#if defined(__APPLE__) && defined(__MACH__)
+      pthread_yield_np();
+#else
+      pthread_yield();
+#endif
+    }
     return (ibvState == ibvInitialized) ? ncclSuccess : ncclSystemError;
   }
 
@@ -65,6 +71,17 @@ ncclResult_t wrap_ibv_symbols(void) {
     }
   }
 
+#if defined(__APPLE__) && defined(__MACH__)
+#define LOAD_SYM(handle, symbol, funcptr) do {         \
+    cast = (void**)&funcptr;                             \
+    tmp = dlsym(handle, symbol);       \
+    if (tmp == NULL) {                                   \
+      WARN("dlsym failed on %s - %s version %s", symbol, dlerror());  \
+      goto teardown;                                     \
+    }                                                    \
+    *cast = tmp;                                         \
+  } while (0)
+#else
 #define LOAD_SYM(handle, symbol, funcptr) do {         \
     cast = (void**)&funcptr;                             \
     tmp = dlvsym(handle, symbol, IBVERBS_VERSION);       \
@@ -74,6 +91,7 @@ ncclResult_t wrap_ibv_symbols(void) {
     }                                                    \
     *cast = tmp;                                         \
   } while (0)
+#endif
 
   LOAD_SYM(ibvhandle, "ibv_get_device_list", ibv_internal_get_device_list);
   LOAD_SYM(ibvhandle, "ibv_free_device_list", ibv_internal_free_device_list);

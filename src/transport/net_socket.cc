@@ -31,7 +31,17 @@ static ncclResult_t ncclSocketGetPciPath(char* devName, char** pciPath) {
   char devicePath[PATH_MAX];
   snprintf(devicePath, PATH_MAX, "/sys/class/net/%s/device", devName);
   // May return NULL if the file doesn't exist.
+#if defined(__APPLE__) && defined(__MACH__)
+  char* _path = (char*)malloc(PATH_MAX * sizeof(char));
+  memcpy(_path, devicePath, PATH_MAX);
+  *pciPath = _path;
+#else
   *pciPath = realpath(devicePath, NULL);
+  if (*pciPath == NULL) {
+    INFO(NCCL_NET|NCCL_INIT, "Could not find real path of %s", devicepath);
+    return ncclSystemError;
+  }
+#endif
   return ncclSuccess;
 }
 

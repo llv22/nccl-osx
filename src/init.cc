@@ -28,10 +28,6 @@
 #define STR2(v) #v
 #define STR(v) STR2(v)
 
-#ifdef ENABLE_TRACE
-std::chrono::high_resolution_clock::time_point ncclEpoch;
-#endif
-
 #if CUDART_VERSION >= 9020
 #define NCCL_GROUP_CUDA_STREAM 0 // CGMD: CUDA 9.2,10.X Don't need to use an internal CUDA stream
 #else
@@ -331,9 +327,11 @@ static ncclResult_t fillInfo(struct ncclComm* comm, struct ncclPeerInfo* info, u
   // Get the device MAJOR:MINOR of /dev/shm so we can use that
   // information to decide whether we can use SHM for inter-process
   // communication in a container environment
+#if not defined(__APPLE) && not defined(__MACH__)
   struct stat statbuf;
   SYSCHECK(stat("/dev/shm", &statbuf), "stat");
   info->shmDev = statbuf.st_dev;
+#endif
 
   info->busId = comm->busId;
 
@@ -530,7 +528,7 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, ncclUniqueId* comm
   free(allGather1Data);
 
   // AllGather1 - end
-
+  // INFO(NCCL_ALL, "begin to construct GPU topo system");
   // Topo detection / System graph creation
   NCCLCHECK(ncclTopoGetSystem(comm, &comm->topo));
   // Compute paths between GPUs and NICs
@@ -543,6 +541,7 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, ncclUniqueId* comm
   NCCLCHECK(ncclTopoSearchInit(comm->topo));
   // Print final topology
   NCCLCHECK(ncclTopoPrint(comm->topo));
+  // INFO(NCCL_ALL, "finish to construct GPU topo system");
 
   // Get rings and trees
   struct ncclTopoGraph ringGraph;
@@ -816,7 +815,7 @@ ncclResult_t ncclCommInitRankSync(ncclComm_t* newcomm, int nranks, ncclUniqueId 
   NCCLCHECKGOTO(initTransportsRank(*newcomm, &commId), res, cleanup);
   NCCLCHECKGOTO(devCommSetup(*newcomm), res, cleanup);
 
-  INFO(NCCL_INIT,"comm %p rank %d nranks %d cudaDev %d busId %lx - Init COMPLETE", *newcomm, myrank, nranks, (*newcomm)->cudaDev, (*newcomm)->busId);
+  INFO(NCCL_INIT,"thread id - %d, comm %p rank %d nranks %d cudaDev %d busId %lx - Init COMPLETE", gettid(), *newcomm, myrank, nranks, (*newcomm)->cudaDev, (*newcomm)->busId);
 
   return ncclSuccess;
 cleanup:
@@ -853,8 +852,12 @@ static ncclResult_t ncclCommInitRankDev(ncclComm_t* newcomm, int nranks, ncclUni
   }
 
 end:
-  if (ncclAsyncMode()) return ncclAsyncErrCheck(res);
-  else return res;
+  if (ncclAsyncMode()) {
+    return ncclAsyncErrCheck(res);
+  }
+  else {
+    return res;
+  }
 }
 
 NCCL_API(ncclResult_t, ncclCommInitRank, ncclComm_t* newcomm, int nranks, ncclUniqueId commId, int myrank);

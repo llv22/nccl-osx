@@ -14,13 +14,19 @@ LIBSRCFILES := init.cc channel.cc bootstrap.cc transport.cc enqueue.cc group.cc 
 		transport/p2p.cc transport/shm.cc transport/net.cc transport/net_socket.cc transport/net_ib.cc transport/coll_net.cc \
                 collectives/sendrecv.cc collectives/all_reduce.cc collectives/all_gather.cc collectives/broadcast.cc collectives/reduce.cc collectives/reduce_scatter.cc \
                 graph/topo.cc graph/paths.cc graph/search.cc graph/connect.cc graph/rings.cc graph/trees.cc graph/tuning.cc graph/xml.cc
+SNVMLLIBSRCFILES := misc/utils.cc debug.cc \
+		nvml/nvidia-ml.cc
 
 ##### lib files
 LIBNAME     := libnccl.so
+SHLIBEXT 	:= dylib
+SHARELIBNAME  := libnccl.$(SHLIBEXT)
 STATICLIBNAME := libnccl_static.a
+SNVMLLIBNAME := libnvidia-ml.so.1
 ##### pkgconfig files
 PKGCONFIGFILE := nccl.pc
 ##### dirs
+STDCXX_LIB = $(shell $(CXX) -print-file-name=libstdc++.$(SHLIBEXT))
 BUILDDIR ?= $(abspath ../build)
 INCDIR := $(BUILDDIR)/include
 LIBDIR := $(BUILDDIR)/lib
@@ -31,20 +37,26 @@ CUDARTLIB  ?= cudart_static
 INCTARGETS := $(INCEXPORTS:%=$(INCDIR)/%)
 LIBSONAME  := $(LIBNAME:%=%.$(NCCL_MAJOR))
 LIBTARGET  := $(LIBNAME:%=%.$(NCCL_MAJOR).$(NCCL_MINOR).$(NCCL_PATCH))
+SHARELIBSONAME  := $(SHARELIBNAME:%=%.$(NCCL_MAJOR))
+SHARELIBTARGET  := $(SHARELIBNAME:%=%.$(NCCL_MAJOR).$(NCCL_MINOR).$(NCCL_PATCH))
 STATICLIBTARGET := $(STATICLIBNAME)
 PKGTARGET  := $(PKGCONFIGFILE)
 LIBOBJ     := $(LIBSRCFILES:%.cc=$(OBJDIR)/%.o)
+SNVMLLIBOBJ     := $(SNVMLLIBSRCFILES:%.cc=$(OBJDIR)/%.o)
 DEPFILES   := $(LIBOBJ:%.o=%.d)
-LDFLAGS    += -L${CUDA_LIB} -l$(CUDARTLIB) -lpthread -lrt -ldl
+DEPSNVMLFILES   := $(SNVMLLIBOBJ:%.o=%.d)
+LDFLAGS    += -L${CUDA_LIB} -l$(CUDARTLIB) -lpthread  -ldl
 
 DEVICELIB  := $(BUILDDIR)/obj/collectives/device/colldevice.a
 
 ##### rules
-build : lib staticlib
+build : lib staticlib sharelib
 
 lib : $(INCTARGETS) $(LIBDIR)/$(LIBTARGET) $(PKGDIR)/$(PKGTARGET)
 
 staticlib : $(LIBDIR)/$(STATICLIBTARGET)
+
+sharelib : $(LIBDIR)/$(SHARELIBTARGET) $(LIBDIR)/$(SNVMLLIBNAME)
 
 $(DEVICELIB): ALWAYS_REBUILD $(INCTARGETS)
 	$(MAKE) -C collectives/device
@@ -53,7 +65,9 @@ $(DEVICELIB): ALWAYS_REBUILD $(INCTARGETS)
 ALWAYS_REBUILD:
 
 -include $(DEPFILES)
-$(LIBDIR)/$(LIBTARGET) $(LIBDIR)/$(STATICLIBTARGET) : $(LIBOBJ)
+-include $(DEPSNVMLFILES)
+$(LIBDIR)/$(LIBTARGET) $(LIBDIR)/$(STATICLIBTARGET) $(LIBDIR)/$(SHARELIBTARGET) : $(LIBOBJ)
+$(LIBDIR)/$(SNVMLLIBNAME) : $(SNVMLLIBOBJ)
 
 $(INCDIR)/nccl.h : nccl.h.in
 # NCCL_VERSION(X,Y,Z) ((X) * 10000 + (Y) * 100 + (Z))
@@ -70,17 +84,29 @@ $(INCDIR)/nccl.h : nccl.h.in
 $(LIBDIR)/$(LIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Linking    %-35s > %s\n" $(LIBTARGET) $@
 	mkdir -p $(LIBDIR)
-	$(CXX) $(CXXFLAGS) -shared -Wl,--no-as-needed -Wl,-soname,$(LIBSONAME) -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -shared -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
 	ln -sf $(LIBSONAME) $(LIBDIR)/$(LIBNAME)
 	ln -sf $(LIBTARGET) $(LIBDIR)/$(LIBSONAME)
+
+$(LIBDIR)/$(SNVMLLIBNAME): $(SNVMLLIBOBJ) 
+	@printf "Linking    %-35s > %s\n" $(SNVMLLIBNAME) $@
+	mkdir -p $(LIBDIR)
+	$(CXX) $(CXXFLAGS) -shared -fPIC -exported_symbols_list symbol.exports -o $@ $(SNVMLLIBOBJ) $(LDFLAGS)
+
+$(LIBDIR)/$(SHARELIBTARGET): $(LIBOBJ) $(DEVICELIB)
+	@printf "Linking    %-35s > %s\n" $(SHARELIBTARGET) $@
+	mkdir -p $(LIBDIR)
+	$(CXX) $(CXXFLAGS) -dynamiclib -o $@ $(LIBOBJ) $(DEVICELIB) $(LDFLAGS)
+	ln -sf $(SHARELIBSONAME) $(LIBDIR)/$(SHARELIBNAME)
+	ln -sf $(SHARELIBTARGET) $(LIBDIR)/$(SHARELIBSONAME)
 
 $(LIBDIR)/$(STATICLIBTARGET): $(LIBOBJ) $(DEVICELIB)
 	@printf "Archiving  %-35s > %s\n" $(STATICLIBTARGET) $@
 	mkdir -p $(LIBDIR)
 	$(eval TMP := $(shell mktemp -d))
 	cp $(LIBOBJ) $(TMP)
-	cd $(TMP) && ar x $(DEVICELIB) && cd -
-	ar cr $@ $(LIBOBJ) $(TMP)/*.o
+	cd $(TMP) && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar x $(DEVICELIB) && cd -
+	/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar cr $@ $(LIBOBJ) $(TMP)/*.o
 	rm -Rf $(TMP)
 
 $(PKGDIR)/nccl.pc : nccl.pc.in

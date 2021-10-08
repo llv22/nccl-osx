@@ -15,6 +15,9 @@
 #include <fcntl.h>
 #include "xml.h"
 #include "cpuset.h"
+#include <sstream>
+
+using namespace std;
 
 #define BUSID_SIZE (sizeof("0000:00:00.0"))
 #define BUSID_REDUCED_SIZE (sizeof("0000:00"))
@@ -26,6 +29,18 @@ const char* topoPathTypeStr[] = { "LOC", "NVL", "NVB", "PIX", "PXB", "PHB", "SYS
 /******************************************************************/
 /******************* Graph Creation Functions *********************/
 /******************************************************************/
+
+// remove, almost changed
+// 1, static int getNumaId(char *path)
+// 2, static ncclResult_t getPciPath(char* busId, char** path)
+// 3, static ncclResult_t idToIndex(struct ncclTopoSystem* system, int64_t id, int* index)
+// 4, static ncclResult_t getPath(int64_t id, char** path)
+// 5, ncclResult_t ncclTopoCudaPath(int cudaDev, char** path) 
+// 6, static ncclResult_t getCpuWidths() 
+// 7, static ncclResult_t ncclTopoGetCpuPciP2pWidth(int* width)
+// 8, static ncclResult_t ncclTopoGetPciWidth(int* width)
+// 9, static ncclResult_t ncclTopoGetNetWidth(int* width)
+// ...
 
 // Get an int64 from a PCI path. For example, sys/class/pci0000:00/0000:00:02.0/0000:02:00.0/ will return 0x000002000.
 ncclResult_t pciPathToInt64(char* path, int offset, int minOffset, int64_t* id) {
@@ -246,13 +261,13 @@ ncclResult_t ncclTopoConnectCpus(struct ncclTopoSystem* system) {
 
 static ncclResult_t ncclTopoPrintRec(struct ncclTopoNode* node, struct ncclTopoNode* prevNode, char* line, int offset) {
   if (node->type == GPU) {
-    sprintf(line+offset, "%s/%lX (%d)", topoNodeTypeStr[node->type], node->id, node->gpu.rank);
+    sprintf(line+offset, "%s/%llX (%d)", topoNodeTypeStr[node->type], node->id, node->gpu.rank);
   } else if (node->type == CPU) {
-    sprintf(line+offset, "%s/%lX (%d/%d/%d)", topoNodeTypeStr[node->type], node->id, node->cpu.arch, node->cpu.vendor, node->cpu.model);
+    sprintf(line+offset, "%s/%llX (%d/%d/%d)", topoNodeTypeStr[node->type], node->id, node->cpu.arch, node->cpu.vendor, node->cpu.model);
   } else if (node->type == PCI) {
-    sprintf(line+offset, "%s/%lX (%lx)", topoNodeTypeStr[node->type], node->id, node->pci.device);
+    sprintf(line+offset, "%s/%llX (%lx)", topoNodeTypeStr[node->type], node->id, node->pci.device);
   } else {
-    sprintf(line+offset, "%s/%lX", topoNodeTypeStr[node->type], node->id);
+    sprintf(line+offset, "%s/%llX", topoNodeTypeStr[node->type], node->id);
   }
   INFO(NCCL_GRAPH, "%s", line);
   for (int i=0; i<offset; i++) line[i] = ' ';
@@ -267,9 +282,9 @@ static ncclResult_t ncclTopoPrintRec(struct ncclTopoNode* node, struct ncclTopoN
         NCCLCHECK(ncclTopoPrintRec(link->remNode, node, line, nextOffset));
       } else {
         if (link->remNode->type == NET) {
-          sprintf(line+nextOffset, "%s/%lX (%lx/%d/%f)", topoNodeTypeStr[link->remNode->type], link->remNode->id, link->remNode->net.asic, link->remNode->net.port, link->remNode->net.width);
+          sprintf(line+nextOffset, "%s/%llX (%lx/%d/%f)", topoNodeTypeStr[link->remNode->type], link->remNode->id, link->remNode->net.asic, link->remNode->net.port, link->remNode->net.width);
         } else {
-          sprintf(line+nextOffset, "%s/%lX", topoNodeTypeStr[link->remNode->type], link->remNode->id);
+          sprintf(line+nextOffset, "%s/%llX", topoNodeTypeStr[link->remNode->type], link->remNode->id);
         }
         INFO(NCCL_GRAPH, "%s", line);
       }

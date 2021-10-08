@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+//moving from init.cc to debug.cc in order to avoid cyclic dependencies during compilation, especially for nvidia-ml.cc case
+#ifdef ENABLE_TRACE
+std::chrono::high_resolution_clock::time_point ncclEpoch;
+#endif
+
 int ncclDebugLevel = -1;
 thread_local int ncclDebugNoWarn = 0;
 uint64_t ncclDebugMask = NCCL_INIT; // Default debug sub-system mask is INIT
