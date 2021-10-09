@@ -7,6 +7,7 @@
 #ifndef NCCL_TOPO_H_
 #define NCCL_TOPO_H_
 
+#include "cpuset.h"
 #include "graph.h"
 #include "core.h"
 #include <sched.h>

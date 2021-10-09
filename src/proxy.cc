@@ -415,7 +415,11 @@ void* persistentThread(void *comm_) {
   struct ncclProxyState* state = &comm->proxyState;
   char threadName[16];
   sprintf(threadName, "NCCLproxy %5d", comm->rank);
+#if defined(__APPLE__) && defined(__MACH__)
+  nvtxNameOsThreadA(gettid(), threadName);
+#else
   nvtxNameOsThreadA(syscall(SYS_gettid), threadName);
+#endif
 
   struct ncclProxyArgs** opsPtr = &state->ops;
   while (1) {

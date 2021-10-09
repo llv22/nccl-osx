@@ -76,7 +76,7 @@ ncclResult_t wrap_ibv_symbols(void) {
     cast = (void**)&funcptr;                             \
     tmp = dlsym(handle, symbol);       \
     if (tmp == NULL) {                                   \
-      WARN("dlsym failed on %s - %s version %s", symbol, dlerror());  \
+      WARN("dlsym failed on %s - %s version %s", symbol, dlerror(), IBVERBS_VERSION);  \
       goto teardown;                                     \
     }                                                    \
     *cast = tmp;                                         \

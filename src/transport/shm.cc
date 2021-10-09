@@ -42,11 +42,11 @@ ncclResult_t shmCanConnect(int* ret, struct ncclTopoSystem* topo, struct ncclTop
   if (ncclParamShmDisable() == 1) return ncclSuccess;
 
   // Same host?
-  TRACE(NCCL_INIT|NCCL_SHM, "peer1 hostHash %lx peer2 hostHash %lx", info1->hostHash, info2->hostHash);
+  TRACE(NCCL_INIT|NCCL_SHM, "peer1 hostHash %llx peer2 hostHash %llx", info1->hostHash, info2->hostHash);
   if (info1->hostHash != info2->hostHash) return ncclSuccess;
 
   // Common /dev/shm (between containers) ?
-  TRACE(NCCL_INIT|NCCL_SHM, "peer1 shmDev %lx peer2 shmDev %lx", info1->shmDev, info2->shmDev);
+  TRACE(NCCL_INIT|NCCL_SHM, "peer1 shmDev %x peer2 shmDev %x", info1->shmDev, info2->shmDev);
   if (info1->shmDev != info2->shmDev) return ncclSuccess;
 
   *ret = 1;
@@ -74,7 +74,7 @@ ncclResult_t shmSendSetup(struct ncclComm* comm, struct ncclTopoGraph* graph, st
   INFO(NCCL_ALL,"Open shmName %s shmSize %d", shmName, info.shmSize);
   NCCLCHECK(shmOpen(shmName, resources->shmSize, (void**)&resources->hostMem, (void**)&resources->devHostMem, 1));
 
-  INFO(NCCL_INIT|NCCL_SHM,"Channel %02d : %d[%lx] -> %d[%lx] via direct shared memory", channelId, myInfo->rank, myInfo->busId, peerInfo->rank, peerInfo->busId);
+  INFO(NCCL_INIT|NCCL_SHM,"Channel %02d : %d[%llx] -> %d[%llx] via direct shared memory", channelId, myInfo->rank, myInfo->busId, peerInfo->rank, peerInfo->busId);
   static_assert(sizeof(struct shmConnectInfo) <= sizeof(struct ncclConnect), "shm Connect Recv Info is too big");
   memcpy(connectInfo, &info, sizeof(struct shmConnectInfo));
   return ncclSuccess;

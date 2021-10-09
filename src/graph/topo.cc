@@ -265,7 +265,7 @@ static ncclResult_t ncclTopoPrintRec(struct ncclTopoNode* node, struct ncclTopoN
   } else if (node->type == CPU) {
     sprintf(line+offset, "%s/%llX (%d/%d/%d)", topoNodeTypeStr[node->type], node->id, node->cpu.arch, node->cpu.vendor, node->cpu.model);
   } else if (node->type == PCI) {
-    sprintf(line+offset, "%s/%llX (%lx)", topoNodeTypeStr[node->type], node->id, node->pci.device);
+    sprintf(line+offset, "%s/%llX (%llx)", topoNodeTypeStr[node->type], node->id, node->pci.device);
   } else {
     sprintf(line+offset, "%s/%llX", topoNodeTypeStr[node->type], node->id);
   }
@@ -282,7 +282,7 @@ static ncclResult_t ncclTopoPrintRec(struct ncclTopoNode* node, struct ncclTopoN
         NCCLCHECK(ncclTopoPrintRec(link->remNode, node, line, nextOffset));
       } else {
         if (link->remNode->type == NET) {
-          sprintf(line+nextOffset, "%s/%llX (%lx/%d/%f)", topoNodeTypeStr[link->remNode->type], link->remNode->id, link->remNode->net.asic, link->remNode->net.port, link->remNode->net.width);
+          sprintf(line+nextOffset, "%s/%llX (%llx/%d/%f)", topoNodeTypeStr[link->remNode->type], link->remNode->id, link->remNode->net.asic, link->remNode->net.port, link->remNode->net.width);
         } else {
           sprintf(line+nextOffset, "%s/%llX", topoNodeTypeStr[link->remNode->type], link->remNode->id);
         }
@@ -342,7 +342,7 @@ ncclResult_t ncclTopoAddNet(struct ncclXmlNode* xmlNet, struct ncclTopoSystem* s
   NCCLCHECK(ncclTopoCreateNode(system, &net, NET, dev));
   const char* str;
   NCCLCHECK(xmlGetAttr(xmlNet, "guid", &str));
-  if (str) sscanf(str, "0x%lx", &net->net.asic);
+  if (str) sscanf(str, "0x%llx", &net->net.asic);
   else net->net.asic = dev;
 
   ncclDebugNoWarn = NCCL_GRAPH;
@@ -506,7 +506,7 @@ ncclResult_t ncclTopoAddNvLinks(struct ncclXmlNode* node, struct ncclTopoSystem*
     NCCLCHECK(busIdToInt64(parentBusId, &pBusId));
     NCCLCHECK(ncclTopoGetNode(system, &gpu, GPU, pBusId));
     if (gpu == NULL) {
-      WARN("Add NVLink error : could not find GPU %lx", pBusId);
+      WARN("Add NVLink error : could not find GPU %llx", pBusId);
       return ncclInternalError;
     }
     int count;
@@ -586,7 +586,7 @@ static ncclResult_t xmlInitAttrUint64(struct ncclXmlNode* node, const char* attr
   if (index == -1) {
     index = node->nAttrs++;
     strncpy(node->attrs[index].key, attrName, MAX_STR_LEN);
-    snprintf(node->attrs[index].value, MAX_STR_LEN, "0x%lx", value);
+    snprintf(node->attrs[index].value, MAX_STR_LEN, "0x%llx", value);
   }
   return ncclSuccess;
 }

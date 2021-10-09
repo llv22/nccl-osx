@@ -187,7 +187,7 @@ ncclResult_t ncclGroupEnd() {
       pthread_create(ncclGroupThreads+i, NULL, ncclAsyncThreadMain, args);
       uint64_t thread_id;
       pthread_threadid_np(ncclGroupThreads[i], &thread_id);
-      INFO(NCCL_ALL, "to create ncclGroupThreads[%d] id = %d, p = %p to terminate", i, thread_id, ncclGroupThreads[i]);
+      INFO(NCCL_ALL, "to create ncclGroupThreads[%d] id = %llu, p = %p to terminate", i, thread_id, ncclGroupThreads[i]);
       activeThreads++;
       doneArray[i] = 0;
     }
@@ -200,7 +200,7 @@ ncclResult_t ncclGroupEnd() {
         //see: orlando replace pthread_tryjoin_np with pthread_join, as no compatible version on mac for the former
         uint64_t thread_id;
         pthread_threadid_np(ncclGroupThreads[i], &thread_id);
-        INFO(NCCL_ALL, "to wait ncclGroupThreads[%d] id = %d, p = %p to terminate", i, thread_id, ncclGroupThreads[i]);
+        INFO(NCCL_ALL, "to wait ncclGroupThreads[%d] id = %llu, p = %p to terminate", i, thread_id, ncclGroupThreads[i]);
         int err = pthread_join(ncclGroupThreads[i], NULL);
         if (err == EBUSY) continue;
         if (err != 0) {

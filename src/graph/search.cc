@@ -55,7 +55,7 @@ static ncclResult_t findRevLink(struct ncclTopoNode* node1, struct ncclTopoNode*
       return ncclSuccess;
     }
   }
-  WARN("Could not find rev link for %d/%ld -> %d/%ld", node1->type, node1->id, node2->type, node2->id);
+  WARN("Could not find rev link for %d/%lld -> %d/%lld", node1->type, node1->id, node2->type, node2->id);
   return ncclInternalError;
 }
 
@@ -199,7 +199,7 @@ static ncclResult_t getNetIndex(struct ncclTopoSystem* system, int64_t id, int* 
       return ncclSuccess;
     }
   }
-  WARN("Could not find net id %lx", id);
+  WARN("Could not find net id %llx", id);
   return ncclInternalError;
 }
 

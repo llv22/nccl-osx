@@ -166,10 +166,11 @@ static ncclResult_t setupLaunch(struct ncclQueueInfo* eqInfo, int usingCudaGraph
     }
 
     if (channel->gdrMemDesc) {
-      // GDRCOPY support
+      // GDRCOPY support, supposed as a circular queue
       uint64_t first = (channel->workFifoTail-channel->workCount)%NCCL_MAX_OPS;
       uint64_t nelems = channel->workCount;
-      TRACE(NCCL_INIT, "GDRCOPY : copy workFifo %p to %p first %ld last %ld nelems %zi",
+      uint64_t last = (channel->workFifoTail-channel->workCount + nelems)%NCCL_MAX_OPS;
+      TRACE(NCCL_INIT, "GDRCOPY : copy workFifo %p to %p first %llu last %llu nelems %llu",
             channel->workFifo, channel->workFifoGdr, first, last, nelems);
 
       for (int i = 0; i < nelems; i++) {
@@ -220,7 +221,7 @@ ncclResult_t ncclCpuBarrierOut(struct ncclComm* comm) {
   //see: ncclCpuBarrierOut should wait for close
   while (*ptr < comm->intraRanks) {
 #if defined(__APPLE__) && defined(__MACH__)
-    pthread_yield_np()
+    pthread_yield_np();
 #else
     pthread_yield();
 #endif
@@ -526,7 +527,7 @@ static ncclResult_t computeColl(struct ncclInfo* info /* input */, struct ncclWo
   // round up
   proxyArgs->subs[0].recvbytes = stepSize*proxyArgs->sliceSteps;
 
-  TRACE(NCCL_COLL,"opCount %lx slicesteps %d spl %d cpl %d nbytes %zi -> protocol %d nchannels %d nthreads %d, nloops %d nsteps %d chunksize %d comm %p",
+  TRACE(NCCL_COLL,"opCount %llx slicesteps %d spl %d cpl %d nbytes %zi -> protocol %d nchannels %d nthreads %d, nloops %d nsteps %d chunksize %d comm %p",
       proxyArgs->opCount, sliceSteps, info->nstepsPerLoop, info->nchunksPerLoop, info->nBytes, info->protocol, info->nChannels, info->nThreads,
       nLoops, proxyArgs->subs[0].nsteps, chunkSize, info->comm);
   return ncclSuccess;
@@ -863,7 +864,7 @@ ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
     NCCLCHECKGOTO(ncclAsyncColl(info->comm), ret, end);
     NCCLCHECKGOTO(checkSetStream(info), ret, end);
 
-    INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
+    INFO(NCCL_COLL,"%s: opCount %llx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
         info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count,
         info->datatype, info->op, info->root, info->comm, info->comm->nRanks, info->stream);
 
@@ -881,7 +882,7 @@ end:
     NCCLCHECK(ArgsCheck(info));
     NCCLCHECK(checkSetStream(info));
 
-    INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
+    INFO(NCCL_COLL,"%s: opCount %llx sendbuff %p recvbuff %p count %zi datatype %d op %d root %d comm %p [nranks=%d] stream %p",
         info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count,
         info->datatype, info->op, info->root, info->comm, info->comm->nRanks, info->stream);
 

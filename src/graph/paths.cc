@@ -25,7 +25,7 @@ static ncclResult_t getPath(struct ncclTopoSystem* system, struct ncclTopoNode* 
       return ncclSuccess;
     }
   }
-  WARN("Could not find node of type %d id %lx", t, id);
+  WARN("Could not find node of type %d id %llx", t, id);
   return ncclInternalError;
 }
 
@@ -74,7 +74,7 @@ static ncclResult_t ncclTopoSetPaths(struct ncclTopoNode* baseNode, struct ncclT
             }
           }
           if (remPath->list[0] == NULL) {
-            WARN("Failed to find reverse path from remNode %d/%lx nlinks %d to node %d/%lx",
+            WARN("Failed to find reverse path from remNode %d/%llx nlinks %d to node %d/%llx",
                  remNode->type, remNode->id, remNode->nlinks, node->type, node->id);
             return ncclInternalError;
           }
@@ -341,12 +341,12 @@ ncclResult_t ncclTopoCheckGdr(struct ncclTopoSystem* system, int64_t busId, int 
   if (ncclTopoUserGdrLevel != -2) netGdrLevel = ncclTopoUserGdrLevel;
   int distance = gpu->paths[NET][n].type;
   if (distance > netGdrLevel) {
-    INFO(NCCL_NET,"GPU Direct RDMA Disabled for GPU %lx / HCA %d (distance %d > %d)", busId, netDev, distance, netGdrLevel);
+    INFO(NCCL_NET,"GPU Direct RDMA Disabled for GPU %llx / HCA %d (distance %d > %d)", busId, netDev, distance, netGdrLevel);
     return ncclSuccess;
   }
 
   *useGdr = 1;
-  INFO(NCCL_NET,"GPU Direct RDMA Enabled for GPU %lx / HCA %d (distance %d <= %d), read %d", busId, netDev, distance, netGdrLevel, read);
+  INFO(NCCL_NET,"GPU Direct RDMA Enabled for GPU %llx / HCA %d (distance %d <= %d), read %d", busId, netDev, distance, netGdrLevel, read);
   return ncclSuccess;
 }
 
@@ -442,7 +442,7 @@ ncclResult_t ncclTopoTrimSystem(struct ncclTopoSystem* system, struct ncclComm* 
       if (gpu->id == ids[i]) break; else gpu=NULL;
     }
     if (gpu == NULL) {
-      WARN("Could not find id %lx", ids[i]);
+      WARN("Could not find id %llx", ids[i]);
       free(domains);
       free(ids);
       return ncclInternalError;

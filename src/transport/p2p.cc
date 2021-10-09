@@ -82,13 +82,13 @@ ncclResult_t p2pCanConnect(int* ret, struct ncclTopoSystem* topo, struct ncclTop
   // Check that CUDA can do P2P
   int p2p;
   if (cudaDeviceCanAccessPeer(&p2p, cudaDev1, cudaDev2) != cudaSuccess) {
-    INFO(NCCL_INIT|NCCL_P2P,"peer query failed between dev %d(=%lx) and dev %d(=%lx)",
+    INFO(NCCL_INIT|NCCL_P2P,"peer query failed between dev %d(=%llx) and dev %d(=%llx)",
          cudaDev1, info1->busId, cudaDev2, info2->busId);
     *ret = 0;
     return ncclSuccess;
   }
   if (p2p == 0) {
-    INFO(NCCL_INIT|NCCL_P2P,"Could not enable P2P between dev %d(=%lx) and dev %d(=%lx)",
+    INFO(NCCL_INIT|NCCL_P2P,"Could not enable P2P between dev %d(=%llx) and dev %d(=%llx)",
          cudaDev1, info1->busId, cudaDev2, info2->busId);
     *ret = 0;
     return ncclSuccess;
@@ -125,7 +125,7 @@ static ncclResult_t p2pMap(struct ncclPeerInfo* myInfo, struct ncclPeerInfo* pee
       if (err == cudaErrorPeerAccessAlreadyEnabled) {
         cudaGetLastError();
       } else if (err != cudaSuccess) {
-        WARN("failed to peer with device %d(=%lx): %d %s",
+        WARN("failed to peer with device %d(=%llx): %d %s",
             peerInfo->cudaDev, peerInfo->busId, err, cudaGetErrorString(err));
         return ncclInternalError;
       }
@@ -165,17 +165,17 @@ ncclResult_t p2pSendSetup(struct ncclComm* comm, struct ncclTopoGraph* graph, st
     info.rank = myInfo->rank;
     if (myInfo->pidHash == peerInfo->pidHash) {
       if (info.read == 0) send->conn.direct |= NCCL_DIRECT_GPU;
-      INFO(NCCL_INIT|NCCL_P2P, "Channel %02d : %d[%lx] -> %d[%lx] via P2P/direct pointer%s",
+      INFO(NCCL_INIT|NCCL_P2P, "Channel %02d : %d[%llx] -> %d[%llx] via P2P/direct pointer%s",
           channelId, myInfo->rank, myInfo->busId, peerInfo->rank, peerInfo->busId, useReadStr);
     } else {
       CUDACHECK(cudaIpcGetMemHandle(&info.devIpc, info.directPtr));
-      INFO(NCCL_INIT|NCCL_P2P,"Channel %02d : %d[%lx] -> %d[%lx] via P2P/IPC%s",
+      INFO(NCCL_INIT|NCCL_P2P,"Channel %02d : %d[%llx] -> %d[%llx] via P2P/IPC%s",
           channelId, myInfo->rank, myInfo->busId, peerInfo->rank, peerInfo->busId, useReadStr);
     }
   } else {
     NCCLCHECK(bootstrapRemAlloc(sendSize, intermediateRank, resources->bootstrap, &resources->remoteId, &info.devIpc, &info.directPtr));
     info.rank = intermediateRank;
-    INFO(NCCL_INIT|NCCL_P2P, "Channel %02d : %d[%lx] -> %d[%lx] via P2P/indirect/%d[%lx]%s",
+    INFO(NCCL_INIT|NCCL_P2P, "Channel %02d : %d[%llx] -> %d[%llx] via P2P/indirect/%d[%llx]%s",
         channelId, myInfo->rank, myInfo->busId, peerInfo->rank, peerInfo->busId, intermediateRank,
 	comm->peerInfo[intermediateRank].busId, useReadStr);
   }
