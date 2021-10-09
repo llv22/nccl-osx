@@ -76,10 +76,17 @@ static ncclResult_t xmlGetAttr(struct ncclXmlNode* node, const char* attrName, c
 
 static ncclResult_t xmlGetAttrStr(struct ncclXmlNode* node, const char* attrName, const char** value) {
   NCCLCHECK(xmlGetAttr(node, attrName, value));
+#if defined(__APPLE__) && defined(__MACH__)
+  if (*value == NULL) {
+    INFO(NCCL_ALL, "Attribute %s of node %s not found", attrName, node->name);
+    return ncclInternalError;
+  }
+#else
   if (*value == NULL) {
     WARN("Attribute %s of node %s not found", attrName, node->name);
     return ncclInternalError;
   }
+#endif
   return ncclSuccess;
 }
 static ncclResult_t xmlGetAttrInt(struct ncclXmlNode* node, const char* attrName, int* value) {

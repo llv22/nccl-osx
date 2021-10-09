@@ -14,7 +14,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "xml.h"
-#include "cpuset.h"
 #include <sstream>
 
 using namespace std;
@@ -356,6 +355,7 @@ ncclResult_t ncclTopoAddNet(struct ncclXmlNode* xmlNet, struct ncclTopoSystem* s
   if (xmlGetAttrInt(xmlNet, "coll", &net->net.collSupport) != ncclSuccess) net->net.collSupport = 0;
   ncclDebugNoWarn = 0;
 
+  // printf("finish speed=%f, port=%d, gdr=%d, maxconn=%d, coll=%d of ncclTopoAddNet\n", net->net.width, net->net.port, net->net.gdrSupport, net->net.maxChannels, net->net.collSupport);
   NCCLCHECK(ncclTopoConnectNodes(nic, net, LINK_NET, net->net.width));
   NCCLCHECK(ncclTopoConnectNodes(net, nic, LINK_NET, net->net.width));
   return ncclSuccess;
@@ -484,7 +484,9 @@ ncclResult_t ncclTopoAddCpu(struct ncclXmlNode* xmlCpu, struct ncclTopoSystem* s
   }
   for (int s=0; s<xmlCpu->nSubs; s++) {
     struct ncclXmlNode* node = xmlCpu->subs[s];
-    if (strcmp(node->name, "pci") == 0) NCCLCHECK(ncclTopoAddPci(node, system, cpu));
+    if (strcmp(node->name, "pci") == 0) {
+      NCCLCHECK(ncclTopoAddPci(node, system, cpu));
+    }
     if (strcmp(node->name, "nic") == 0) {
       struct ncclTopoNode* nic = NULL;
       NCCLCHECK(ncclTopoGetNode(system, &nic, NIC, 0));
@@ -640,13 +642,16 @@ ncclResult_t ncclTopoGetSystem(struct ncclComm* comm, struct ncclTopoSystem** sy
       NCCLCHECK(xmlInitAttrInt(netNode, "coll", 1));
     }
   }
+
   if (netDevCount == 0) {
     NCCLCHECK(ncclNetDevices(&netDevCount));
+    INFO(NCCL_ALL, "load ncclNetDevices with netDevCount=%d", netDevCount);
   }
   for (int n=0; n<netDevCount; n++) {
     ncclNetProperties_t props;
     NCCLCHECK(ncclNetGetProperties(n, &props));
     struct ncclXmlNode* netNode;
+    INFO(NCCL_ALL, "start ncclTopoFillNet: props.pciPath=%s, props.name=%s", props.pciPath, props.name);
     NCCLCHECK(ncclTopoFillNet(xml, props.pciPath, props.name, &netNode));
     NCCLCHECK(xmlSetAttrInt(netNode, "keep", 1));
     NCCLCHECK(xmlSetAttrInt(netNode, "dev", n));
@@ -662,7 +667,7 @@ ncclResult_t ncclTopoGetSystem(struct ncclComm* comm, struct ncclTopoSystem** sy
 
   xmlTopoFile = getenv("NCCL_TOPO_DUMP_FILE");
   if (xmlTopoFile && comm->rank == ncclParamTopoDumpFileRank()) {
-    INFO(NCCL_ENV, "NCCL_TOPO_DUMP_FILE set by environment to %s", xmlTopoFile);
+    INFO(NCCL_ALL, "NCCL_TOPO_DUMP_FILE set by environment to %s", xmlTopoFile);
     NCCLCHECK(ncclTopoDumpXmlToFile(xmlTopoFile, xml));
   }
 

@@ -86,6 +86,8 @@
         "stop_token": "cpp",
         "inet.h": "c",
         "stdlib.h": "c",
-        "cerrno": "c"
+        "cerrno": "c",
+        "__functional_base_03": "cpp",
+        "__memory": "cpp"
     }
 }

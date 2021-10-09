@@ -324,6 +324,18 @@ static void memcpylower(char* dst, const char* src, const size_t size) {
   for (int i=0; i<size; i++) dst[i] = tolower(src[i]);
 }
 static ncclResult_t getPciPath(const char* busId, char** path) {
+#if defined(__APPLE__) && defined(__MACH__)
+  //see: directly return the dummy PciPath
+  char busPath[] = "/sys/class/pci_bus/0000:00/../../0000:00:00.0";
+  memset(busPath+sizeof("/sys/class/")-1, 0, BUSID_SIZE);
+  memcpy(busPath+sizeof("/sys/class/")-1, busId, BUSID_SIZE-1);
+  int len = sizeof(busPath);
+  char* _path = (char*)malloc(len * sizeof(char));
+  memcpy(_path, busPath, len);
+  *path = _path;
+  INFO(NCCL_ALL, "busId:(%s) on busPath:(%s)", busId, busPath);
+  return ncclSuccess;
+#else
   char busPath[] = "/sys/class/pci_bus/0000:00/../../0000:00:00.0";
   memcpylower(busPath+sizeof("/sys/class/pci_bus/")-1, busId, BUSID_REDUCED_SIZE-1);
   memcpylower(busPath+sizeof("/sys/class/pci_bus/0000:00/../../")-1, busId, BUSID_SIZE-1);
@@ -333,6 +345,7 @@ static ncclResult_t getPciPath(const char* busId, char** path) {
     return ncclSystemError;
   }
   return ncclSuccess;
+#endif
 }
 
 ncclResult_t ncclTopoGetStrFromSys(const char* path, const char* fileName, char* strValue) {
@@ -353,6 +366,7 @@ ncclResult_t ncclTopoGetStrFromSys(const char* path, const char* fileName, char*
   } else {
     strValue[offset-1] = '\0';
   }
+  INFO(NCCL_ALL, "read fileName:(%s) for attribute:(%s) from the whole path:(%s), value is %s", fileName, strValue, filePath, strValue);
   return ncclSuccess;
 }
 
@@ -458,6 +472,9 @@ int checkBDFFormat(char* bdf) {
   return 1;
 }
 
+/**
+ * get ncclTopoGetXmlFromSys attribute and set node
+ */
 ncclResult_t ncclTopoGetXmlFromSys(struct ncclXmlNode* pciNode, struct ncclXml* xml) {
   // Fill info, then parent
   const char* busId;
@@ -674,10 +691,16 @@ ncclResult_t ncclTopoGetXmlFromGpu(struct ncclXmlNode* pciNode, nvmlDevice_t nvm
   return ncclSuccess;
 }
 
+/**
+ * get ncclTopoFillGpu for device.
+ */  
 ncclResult_t ncclTopoFillGpu(struct ncclXml* xml, const char* busId, struct ncclXmlNode** gpuNode) {
   struct ncclXmlNode* node;
   NCCLCHECK(ncclTopoGetPciNode(xml, busId, &node));
+// #if not defined(__APPLE__) || not defined(__MACH__)
   NCCLCHECK(ncclTopoGetXmlFromSys(node, xml));
+// #endif
+  INFO(NCCL_ALL, "ncclTopoFillGpu::wrapNvmlSymbols/wrapNvmlInit");
   nvmlDevice_t nvmlDev = NULL;
   static int nvmlInit = 0;
   if (nvmlInit == 0) {
@@ -686,7 +709,10 @@ ncclResult_t ncclTopoFillGpu(struct ncclXml* xml, const char* busId, struct nccl
   if (nvmlInit == 1) {
     if (wrapNvmlDeviceGetHandleByPciBusId(busId, &nvmlDev) != ncclSuccess) nvmlDev = NULL;
   }
+// #if not defined(__APPLE__) || not defined(__MACH__)
   NCCLCHECK(ncclTopoGetXmlFromGpu(node, nvmlDev, xml, gpuNode));
+  INFO(NCCL_ALL, "ncclTopoFillGpu::ncclTopoGetXmlFromGpu");
+// #endif
   return ncclSuccess;
 }
 

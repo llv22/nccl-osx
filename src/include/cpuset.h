@@ -7,7 +7,9 @@
 #ifndef NCCL_CPUSET_H_
 #define NCCL_CPUSET_H_
 
+#include "nccl.h"
 #include <stdio.h>
+#include <stdint.h>
 
 typedef struct cpu_set {
   uint32_t    count;
@@ -40,7 +42,7 @@ CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
 static inline int
 CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
 
-int sched_getaffinity(pid_t pid, size_t cpu_size, cpu_set_t *cpu_set)
+static int sched_getaffinity(pid_t pid, size_t cpu_size, cpu_set_t *cpu_set)
 {
   int32_t core_count = 0;
   // size_t  len = sizeof(core_count);
@@ -58,7 +60,7 @@ int sched_getaffinity(pid_t pid, size_t cpu_size, cpu_set_t *cpu_set)
   return 0;
 }
 
-int sched_setaffinity(pthread_t thread, size_t cpu_size,
+static int sched_setaffinity(pthread_t thread, size_t cpu_size,
                            cpu_set_t *cpu_set)
 {
   thread_port_t mach_thread;
