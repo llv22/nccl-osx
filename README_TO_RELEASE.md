@@ -11,6 +11,7 @@ make lic
 cp VERSION.txt build/
 cd ext-net/dummy/ # for libnccl-net.so
 make
+cp libnccl-net.so ../../build/lib
 cd ../../build
 mkdir -p /usr/local/nccl-${version}
 cp -rf include /usr/local/nccl-${version}/include
