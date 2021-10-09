@@ -5,7 +5,7 @@ In order to make library and nccl-test compatible, each nccl library version wil
 
 * [nccl-2.5.7-1-release](https://github.com/llv22/nccl-osx/tree/dev-2.5.7-for-jax) should be tested by [nccl-tests-v2.0.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.0.0-built).
 * [nccl-2.5.8-release](https://github.com/llv22/nccl-osx/tree/dev-2.5.8-for-jax) should be tested by [nccl-tests-v2.0.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.0.0-built). This is the first major release which fixes IPv6 address issue on macOS and enables nccl to run for TF/JAX. You can also use [Jax pmap notebook](https://github.com/llv22/jax-macOS-cuda/blob/jax-built-v0.2.6/examples/jax_startup.ipynb) for further client testing.
-* [nccl-2.9.6-release](https://github.com/llv22/nccl-osx/tree/dev-2.9.6-for-jax) should be tested by [nccl-tests-v2.11.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.11.0-built), as new operations of nccl have been added for nvidia nccl-2.9.6-1.
+* [nccl-2.9.6-release](https://github.com/llv22/nccl-osx/tree/dev-2.9.6-for-jax) should be tested by [nccl-tests-v2.11.0 on mac](https://github.com/llv22/nccl-tests-macOS-cuda/tree/v2.11.0-built), as new operations of nccl have been added for nvidia nccl-2.9.6-1. Currently, orlando still has to use a workaround in MIGRATION.md to create /sys/class/0000:c4:00.0/, /sys/class/0000:45:00.0/ and /sys/devices/system/node/node in local computer.
 
 ## Motivation
 
@@ -50,10 +50,10 @@ At present, the library implements the following collectives operations, which h
 * reduce-scatter 【passed】
 * reduce     【passed】
 * broadcast  【passed】
-* sendrecv   【?】
-* scatter    【?】
-* hypercube  【?】
-* alltoall   【?】
+* sendrecv   【passed】
+* scatter    【passed】
+* hypercube  【passed】
+* alltoall   【passed】
 
 You can easily reproduce my result from <https://github.com/llv22/nccl-tests-macOS-cuda>. The latest test results with my two GeForce 1080, macOS 10.13.6, cuda10.1 + cudnn7.3.6 as follow:
 

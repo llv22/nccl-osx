@@ -83,7 +83,6 @@ ffffff
 
 * reference from ubuntu-gpu
 
-
 * macOS local simulation
 /sys/class/0000:c4:00.0/
 sudo sh -c "echo '0x060400' >> class"
