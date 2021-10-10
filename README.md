@@ -155,9 +155,9 @@ make install PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/driver
 
 * refer to <https://developer.apple.com/forums/thread/26542>
 
-2, NCCL 2.5.6 development guideline (Currently Orlando used 2.9.6-1 as based line, but documentation should keep consistent with 2.9.6)  
+2, NCCL 2.9.6 development guideline (Currently Orlando used 2.9.6-1 as based line, but documentation should keep consistent with 2.9.6)  
 
-* As the first milestone aims at migration of source code of 2.9.6 and fully support nccl-tests, going through the development documentation of 2.5.7 becomes a must-have
+* As the first milestone aims at migration of source code of 2.9.6 and fully support nccl-tests, going through the development documentation of 2.9.6 becomes a must-have
 * General development guide, refer to <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_296/user-guide/docs/index.html>  
 * About enabling tracing and logging for debugging purposes, refer to <https://github.com/NVIDIA/nccl/issues/197> and environment variable for controlling log of nccl 2.9.6 in <https://docs.nvidia.com/deeplearning/nccl/archives/nccl_296/user-guide/docs/env.html>. **Currently logging mechanism is clear but TRACE isn't still not working.**
 
