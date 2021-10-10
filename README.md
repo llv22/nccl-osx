@@ -71,9 +71,11 @@ These operations are implemented using ring algorithms and have been optimized f
 
 * [NCCL-macOS 2.5.7.2 release full](https://github.com/llv22/nccl-osx/releases/tag/nccl-macOS-2.5.7-2-release-full) fixes the issue of initializing nccl library on macOS during setup of the socket server.
 
+* [NCCL-macOS 2.9.6 release full](https://github.com/llv22/nccl-osx/releases/tag/nccl-macOS-2.9.6-release-full) supports ncclSend, SendRecv, HpyerCube and other new operations since 2.7.x. This library fully support for jax 0.2.21 and TF 2.4.
+
 ### Next step
 
-* nccl library needs another upgrade to 2.9.6-1, as now Jax 0.2.21 is needed by AlphaFold2, which can provide the key representation of the 3D protein structures
+* NCCL 2.9.7 aims at removing workaround for devices detection during construction of topo system.
 
 ## Requirements
 
