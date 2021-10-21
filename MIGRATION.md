@@ -25,7 +25,7 @@ copy from [Test folder of nccl2.5.8](https://github.com/llv22/nccl-osx/tree/dev-
 ### 3.2 makefiles
 
 * makefiles/common.mk
-* makefiles/version.mk 
+* makefiles/version.mk
 
 ### 3.3 src
 
@@ -121,3 +121,9 @@ cpumap
 sudo mkdir -p /sys/devices/system/node/node0  
 cd /sys/devices/system/node/node0  
 sudo sh -c "echo 'ffffff' >> cpumap"  
+
+## 5. how to use macOS c++ interface to check pci device status
+
+[I/O driver Kit reference](https://developer.apple.com/library/archive/documentation/DeviceDrivers/Conceptual/IOKitFundamentals/Introduction/Introduction.html)  
+
+* [IOPCIDevice](https://developer.apple.com/documentation/kernel/iopcidevice)
