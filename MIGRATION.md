@@ -126,4 +126,5 @@ sudo sh -c "echo 'ffffff' >> cpumap"
 
 [I/O driver Kit reference](https://developer.apple.com/library/archive/documentation/DeviceDrivers/Conceptual/IOKitFundamentals/Introduction/Introduction.html)  
 
-* [IOPCIDevice](https://developer.apple.com/documentation/kernel/iopcidevice)
+* [IOPCIDevice](https://developer.apple.com/documentation/kernel/iopcidevice)  
+* [Device keys query](https://developer.apple.com/library/archive/documentation/DeviceDrivers/Conceptual/AccessingHardware/AH_Finding_Devices/AH_Finding_Devices.html)  
