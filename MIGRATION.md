@@ -128,3 +128,4 @@ sudo sh -c "echo 'ffffff' >> cpumap"
 
 * [IOPCIDevice](https://developer.apple.com/documentation/kernel/iopcidevice)  
 * [Device keys query](https://developer.apple.com/library/archive/documentation/DeviceDrivers/Conceptual/AccessingHardware/AH_Finding_Devices/AH_Finding_Devices.html)  
+* [Programming examples](https://developer.apple.com/library/archive/navigation/index.html)
