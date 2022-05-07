@@ -488,4 +488,76 @@ EXPORT // Symbol to export
     return NVML_SUCCESS;
 }
 
+/**
+ * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
+ * Exported function 12: nvmlDeviceGetComputeRunningProcesses, pytorch internal symbol: deviceGetComputeRunningProcesses
+ * This API will be remapped to deviceGetComputeRunningProcesses in Line 33 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ */
+EXPORT // Symbol to export
+    nvmlReturn_t
+    nvmlDeviceGetComputeRunningProcesses(nvmlDevice_t device, unsigned int *infoCount, nvmlProcessInfo_t *infos)
+{
+    return NVML_SUCCESS;
+}
+
+/**
+ * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
+ * Exported function 13: nvmlDeviceGetCount_v2, pytorch internal symbol: deviceGetCount_v2
+ * This API will be remapped to deviceGetCount_v2 in Line 37 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ */
+EXPORT // Symbol to export
+    nvmlReturn_t
+    nvmlDeviceGetCount_v2(unsigned int *deviceCount)
+{
+    return NVML_SUCCESS;
+}
+
+/**
+ * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
+ * Exported function 14: nvmlDeviceGetHandleByIndex_v2, pytorch internal symbol: deviceGetHandleByIndex_v2
+ * This API will be remapped to deviceGetHandleByIndex_v2 in Line 38 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ */
+EXPORT // Symbol to export
+    nvmlReturn_t
+    nvmlDeviceGetHandleByIndex_v2(unsigned int index, nvmlDevice_t *device)
+{
+    return NVML_SUCCESS;
+}
+
+/**
+ * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
+ * Exported function 15: nvmlDeviceGetHandleByUUID, pytorch internal symbol: deviceGetHandleByUUID
+ * This API will be remapped to deviceGetHandleByUUID in Line 42 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ */
+EXPORT // Symbol to export
+    nvmlReturn_t
+    nvmlDeviceGetHandleByUUID(const char *serial, nvmlDevice_t *device)
+{
+    return NVML_SUCCESS;
+}
+
+/**
+ * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
+ * Exported function 16: nvmlDeviceGetP2PStatus, pytorch internal symbol: deviceGetP2PStatus
+ * This API will be remapped to deviceGetP2PStatus in Line 46 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ */
+EXPORT // Symbol to export
+    nvmlReturn_t
+    nvmlDeviceGetP2PStatus(nvmlDevice_t device1, nvmlDevice_t device2, nvmlGpuP2PCapsIndex_t p2pIndex,nvmlGpuP2PStatus_t *p2pStatus)
+{
+    return NVML_SUCCESS;
+}
+
+/**
+ * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
+ * Exported function 17: nvmlDeviceGetUUID, pytorch internal symbol: deviceGetUUID
+ * This API will be remapped to deviceGetUUID in Line 50 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ */
+EXPORT // Symbol to export
+    nvmlReturn_t
+    nvmlDeviceGetUUID(nvmlDevice_t device, char *uuid, unsigned int length)
+{
+    return NVML_SUCCESS;
+}
+
 #endif

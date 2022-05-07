@@ -1,13 +1,42 @@
-# File: symbol.exports
-_nvmlInit
-_nvmlShutdown
-_nvmlDeviceGetHandleByPciBusId
-_nvmlDeviceGetIndex
-_nvmlDeviceGetHandleByIndex
+## File: symbol.exports
+## Common
+# f0
 _nvmlErrorString
-_nvmlDeviceGetPciInfo
-_nvmlDeviceGetMinorNumber
+# f1
+_nvmlInit
+# f2
+_nvmlShutdown
+
+## NCCL
+# f3
+_nvmlDeviceGetHandleByPciBusId
+# f4
 _nvmlDeviceGetNvLinkState
+# f5
 _nvmlDeviceGetNvLinkRemotePciInfo
+# f6
 _nvmlDeviceGetNvLinkCapability
+# f7
 _nvmlDeviceGetCudaComputeCapability
+# f8
+_nvmlDeviceGetMinorNumber
+# f9
+_nvmlDeviceGetIndex
+# f10
+_nvmlDeviceGetHandleByIndex
+# f11
+_nvmlDeviceGetPciInfo
+
+## Pytorch tensorpipe
+# f12
+_nvmlDeviceGetComputeRunningProcesses
+# f13
+_nvmlDeviceGetCount_v2
+# f14
+_nvmlDeviceGetHandleByIndex_v2
+# f15
+_nvmlDeviceGetHandleByUUID
+# f16
+_nvmlDeviceGetP2PStatus
+# f17
+_nvmlDeviceGetUUID

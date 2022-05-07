@@ -118,7 +118,7 @@ make -j src.build NVCC_GENCODE="-gencode=arch=compute_70,code=sm_70"
 To build the fat library compatible with *-std=c++14*, as this version is consistent with JAX:
 
 ```shell
-version=2.9.6
+version=2.9.6.1
 make src.build CXX=clang++ -j8
 make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-${version} -j12
 make src.build CXX=clang++ PREFIX=/Users/llv23/Documents/05_machine_learning/dl_gpu_mac/drivers_mac/nccl-osx/nccl-${version} TRACE=1 -j12 #enable trace for compiling, about 16 minutes
