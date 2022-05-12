@@ -277,6 +277,20 @@ __inline__ nvmlReturn_t queryOnlineDevice(nvmlDevice_t _d, nvmlDevice_t& realDev
     return NVML_SUCCESS;
 }
 
+__inline__ nvmlReturn_t queryOnlineDeviceIndex(nvmlDevice_t _d, nvmlDevice_t& realDevice, int& index) {
+    if (devices.size() == 0) {
+       return NVML_ERROR_NOT_FOUND;
+    }
+    vector<nvmlDevice_t>::iterator it = find(devices.begin(), devices.end(), _d);
+    index = it - devices.begin();
+    if (it == devices.end()) {
+        WARN("target device %p can't be found", _d);
+        return NVML_ERROR_GPU_IS_LOST;
+    }
+    realDevice = *it;
+    return NVML_SUCCESS;
+}
+
 __inline__ nvmlReturn_t queryOnlineDevice(nvmlDevice_t _d, unsigned int& index) {
     if (devices.size() == 0) {
        return NVML_ERROR_NOT_FOUND;
@@ -504,11 +518,23 @@ EXPORT // Symbol to export
  * Mandatory to load && Used in https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h
  * Exported function 13: nvmlDeviceGetCount_v2, pytorch internal symbol: deviceGetCount_v2
  * This API will be remapped to deviceGetCount_v2 in Line 37 of https://github.com/pytorch/tensorpipe/blob/52791a2fd214b2a9dc5759d36725909c1daa7f2e/tensorpipe/common/dl.h.
+ * API document in https://docs.nvidia.com/deploy/nvml-api/group__nvmlDeviceQueries.html#group__nvmlDeviceQueries_1ga93623b195bff04bbe3490ca33c8a42d
  */
 EXPORT // Symbol to export
     nvmlReturn_t
     nvmlDeviceGetCount_v2(unsigned int *deviceCount)
 {
+    int cnt;
+
+    cudaSetDeviceFlags(cudaDeviceMapHost | cudaDeviceScheduleBlockingSync);
+
+    cudaError_t cures = cudaGetDeviceCount(&cnt);
+    if (cures)
+    {
+        WARN("can't retrieve gpu device number, failed to successfully load driver");
+        return NVML_ERROR_UNINITIALIZED;
+    }
+    *deviceCount = cnt;
     return NVML_SUCCESS;
 }
 
@@ -521,6 +547,10 @@ EXPORT // Symbol to export
     nvmlReturn_t
     nvmlDeviceGetHandleByIndex_v2(unsigned int index, nvmlDevice_t *device)
 {
+    if (device_count <= index || NULL == *device) {
+        return NVML_ERROR_INVALID_ARGUMENT;
+    }
+    device = &devices[index];
     return NVML_SUCCESS;
 }
 
@@ -531,9 +561,17 @@ EXPORT // Symbol to export
  */
 EXPORT // Symbol to export
     nvmlReturn_t
-    nvmlDeviceGetHandleByUUID(const char *serial, nvmlDevice_t *device)
+    nvmlDeviceGetHandleByUUID(const char *uuid, nvmlDevice_t *device)
 {
-    return NVML_SUCCESS;
+    for (vector<nvmlDevice_t>::iterator it=devices.begin(); it!=devices.end(); it++)
+    {
+        if (strcmp((*it)->prop->uuid.bytes, uuid)) {
+            device = &(*it);
+            return NVML_SUCCESS;
+        }
+    }
+    
+    return NVML_ERROR_NOT_FOUND;
 }
 
 /**
@@ -545,6 +583,75 @@ EXPORT // Symbol to export
     nvmlReturn_t
     nvmlDeviceGetP2PStatus(nvmlDevice_t device1, nvmlDevice_t device2, nvmlGpuP2PCapsIndex_t p2pIndex,nvmlGpuP2PStatus_t *p2pStatus)
 {
+    if (p2pIndex == NVML_P2P_CAPS_INDEX_NVLINK || p2pIndex == NVML_P2P_CAPS_INDEX_UNKNOWN) {
+        return NVML_ERROR_UNKNOWN;
+    }
+    if (p2pStatus == NULL) {
+        return NVML_ERROR_INVALID_ARGUMENT;
+    }
+    nvmlDevice_t realDevice0 = NULL;
+    int realDevice0Index;
+    nvmlReturn_t status = queryOnlineDeviceIndex(device1, realDevice0, realDevice0Index);
+    if (status != NVML_SUCCESS) {
+        return NVML_ERROR_INVALID_ARGUMENT;
+    }
+    nvmlDevice_t realDevice1 = NULL;
+    int realDevice1Index;
+    status = queryOnlineDeviceIndex(device2, realDevice1, realDevice1Index);
+    if (status != NVML_SUCCESS) {
+        return NVML_ERROR_INVALID_ARGUMENT;
+    }
+    if (p2pIndex == NVML_P2P_CAPS_INDEX_READ ||p2pIndex == NVML_P2P_CAPS_INDEX_WRITE) {
+        int can_access_peer_0_1 = 0;
+        int can_access_peer_1_0 = 0;
+        cudaDeviceCanAccessPeer(&can_access_peer_0_1, realDevice0Index, realDevice1Index);
+        cudaDeviceCanAccessPeer(&can_access_peer_1_0, realDevice1Index, realDevice0Index);
+        if (can_access_peer_0_1 && can_access_peer_1_0) {
+            *p2pStatus = NVML_P2P_STATUS_OK;
+        }
+        else {
+            *p2pStatus = NVML_P2P_STATUS_NOT_SUPPORTED;
+        }
+    }
+    if (p2pIndex == NVML_P2P_CAPS_INDEX_ATOMICS) {
+        int atomicAttribute;
+        int can_access_peer_0_1 = 0;
+        cudaError_t retValue = cudaDeviceGetP2PAttribute(&atomicAttribute, cudaDeviceP2PAttr::cudaDevP2PAttrNativeAtomicSupported, realDevice0Index, realDevice1Index);
+        if (retValue == cudaSuccess) {
+            can_access_peer_0_1 = 1;
+        }
+        int can_access_peer_1_0 = 0;  
+        retValue = cudaDeviceGetP2PAttribute(&atomicAttribute, cudaDeviceP2PAttr::cudaDevP2PAttrNativeAtomicSupported, realDevice1Index, realDevice0Index);
+        if (retValue == cudaSuccess) {
+            can_access_peer_1_0 = 1;
+        }
+        if (can_access_peer_0_1 && can_access_peer_1_0) {
+            *p2pStatus = NVML_P2P_STATUS_OK;
+        }
+        else {
+            *p2pStatus = NVML_P2P_STATUS_NOT_SUPPORTED;
+        }
+    }
+    if (p2pIndex == NVML_P2P_CAPS_INDEX_PROP) {
+        //see: orlando supposed that it means cudaDevP2PAttrPerformanceRank
+        int atomicAttribute;
+        int can_access_peer_0_1 = 0;
+        cudaError_t retValue = cudaDeviceGetP2PAttribute(&atomicAttribute, cudaDeviceP2PAttr::cudaDevP2PAttrPerformanceRank, realDevice0Index, realDevice1Index);
+        if (retValue == cudaSuccess) {
+            can_access_peer_0_1 = 1;
+        }
+        int can_access_peer_1_0 = 0;  
+        retValue = cudaDeviceGetP2PAttribute(&atomicAttribute, cudaDeviceP2PAttr::cudaDevP2PAttrPerformanceRank, realDevice1Index, realDevice0Index);
+        if (retValue == cudaSuccess) {
+            can_access_peer_1_0 = 1;
+        }
+        if (can_access_peer_0_1 && can_access_peer_1_0) {
+            *p2pStatus = NVML_P2P_STATUS_OK;
+        }
+        else {
+            *p2pStatus = NVML_P2P_STATUS_NOT_SUPPORTED;
+        }
+    }
     return NVML_SUCCESS;
 }
 
@@ -557,7 +664,23 @@ EXPORT // Symbol to export
     nvmlReturn_t
     nvmlDeviceGetUUID(nvmlDevice_t device, char *uuid, unsigned int length)
 {
-    return NVML_SUCCESS;
+    if (length <= 0) {
+        return NVML_ERROR_INVALID_ARGUMENT;
+    }
+    for (vector<nvmlDevice_t>::iterator it=devices.begin(); it!=devices.end(); it++)
+    {
+        if (&device == &(*it)) {
+            if (strlen((*it)->prop->uuid.bytes) < length) {
+                return NVML_ERROR_INVALID_ARGUMENT;   
+            }
+            else {
+                strncpy(uuid, (*it)->prop->uuid.bytes, length);
+                return NVML_SUCCESS;
+            }
+        }
+    }
+
+    return NVML_ERROR_GPU_IS_LOST;
 }
 
 #endif
