@@ -511,6 +511,24 @@ EXPORT // Symbol to export
     nvmlReturn_t
     nvmlDeviceGetComputeRunningProcesses(nvmlDevice_t device, unsigned int *infoCount, nvmlProcessInfo_t *infos)
 {
+    // for macOS version, we can only retrieve the total memory consumption for certain device, leaving process id = -1 to indicate the aggregated processes
+    // TODO: for further follow-ups, esp. how to trace memory consumption for individual process, orlando still need further investigations
+    if (NULL == infoCount || NULL == infos){
+        return NVML_ERROR_INVALID_ARGUMENT;
+    }
+    
+    nvmlDevice_t realDevice;
+    int indexOfDevice;
+    nvmlReturn_t status = queryOnlineDeviceIndex(device, realDevice, indexOfDevice);
+    if (status != NVML_SUCCESS) {
+        return NVML_ERROR_NOT_SUPPORTED;
+    }
+    cudaSetDevice(indexOfDevice);
+    size_t memUsed, memTotal;
+    cudaMemGetInfo(&memUsed, &memTotal);
+    *infoCount = -1;
+    infos->pid = -1;
+    infos->usedGpuMemory = memUsed;
     return NVML_SUCCESS;
 }
 

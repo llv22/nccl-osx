@@ -9,4 +9,5 @@ test/thread_coll
 test/ipv6_socket
 test/*.dSYM/
 libnccl-net.dylib
-libnccl-net.so 
+libnccl-net.so
+*.log
